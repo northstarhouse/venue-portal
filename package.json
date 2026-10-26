@@ -1,0 +1,12 @@
+{
+  "name": "venue-portal",
+  "version": "1.0.0",
+  "private": true,
+  "description": "North Star House client event page (venue.northstarhouse.org) and Client Guidebook",
+  "scripts": {
+    "build": "esbuild src/main.jsx --bundle --outfile=assets/app.js --minify --format=iife --jsx-factory=React.createElement --jsx-fragment=React.Fragment --target=es2017 && node scripts/stamp.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "^0.27.2"
+  }
+}
