@@ -5,6 +5,8 @@ const style = `.cp-page{overflow-x:hidden;--gold:#886c44;--ink:#2c2418;--muted:#
 .cp-page h1{font-family:Cardo,Georgia,serif;font-weight:700;font-size:28px;line-height:1.15;margin:8px 0 18px}
 .cp-head{position:relative;display:flex;justify-content:space-between;align-items:flex-start;gap:16px;min-height:196px;margin-bottom:18px}
 .cp-head-img{position:absolute;top:-24px;right:calc(50% - 50vw);height:290px;width:min(calc(8% + 50vw),840px);background:#d9cdb8 url(assets/header-house.jpg) center/cover;filter:saturate(.8) brightness(1.04);opacity:.95;-webkit-mask-image:linear-gradient(to right,transparent 0,#000 36%),linear-gradient(to bottom,#000 64%,transparent 100%);-webkit-mask-composite:source-in;mask-image:linear-gradient(to right,transparent 0,#000 36%),linear-gradient(to bottom,#000 64%,transparent 100%);mask-composite:intersect;pointer-events:none}
+.cp-hico{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:#f1e8d8;color:var(--gold);flex:none;margin-right:10px;vertical-align:middle}.cp-acc-head .cp-h{display:inline-flex;align-items:center}.cp-card>h2{display:flex;align-items:center}
+.cp-days{display:grid;gap:14px;max-height:340px;overflow-y:auto;margin:14px 0}.cp-day b{display:block;font-size:14px;margin-bottom:6px}.cp-times{display:flex;flex-wrap:wrap;gap:8px}.cp-time{border:1px solid var(--gold);background:#fff;color:var(--gold);padding:7px 14px;font:inherit;font-size:13px;font-weight:600;cursor:pointer;border-radius:0}.cp-time[aria-pressed=true],.cp-time:hover{background:var(--gold);color:#fff}
 .cp-head-main{position:relative;z-index:1;max-width:62%;padding-top:6px}.cp-page .cp-head h1{font-size:clamp(28px,4vw,40px);margin:36px 0 18px}
 .cp-sub{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:14px;flex-wrap:wrap}.cp-sub i{width:1px;height:14px;background:#b9ab92;display:inline-block}
 .cp-head-side{position:relative;z-index:1;align-self:stretch;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-end}.cp-countdown{background:var(--gold);color:#fff;padding:12px 28px 10px;text-align:center;display:inline-block;min-width:150px}.cp-countdown strong{display:block;font-family:Cardo,Georgia,serif;font-size:38px;font-weight:400;line-height:1.05}.cp-countdown hr{border:0;border-top:1px solid rgba(255,255,255,.55);margin:5px 16px 7px}.cp-countdown span{font-size:11px;letter-spacing:.2em;text-transform:uppercase}
@@ -34,6 +36,10 @@ const ICONS = {
   clipboard: <><rect x="6" y="4" width="12" height="17" rx="1" /><path d="M9 4h6v3H9z" /><path d="M9 14l2 2 4-4" /></>,
   doc: <><path d="M7 3h7l4 4v14H7z" /><path d="M14 3v4h4" /><path d="M10 12h5M10 16h5" /></>,
   calendar: <><rect x="4" y="5" width="16" height="15" rx="1" /><path d="M4 10h16M8 3v4M16 3v4" /></>,
+  card: <><rect x="3" y="6" width="18" height="13" rx="1" /><path d="M3 10h18M7 15h4" /></>,
+  chat: <><path d="M4 5h16v11H10l-5 4v-4H4z" /><path d="M8 9.5h8M8 12.5h5" /></>,
+  walk: <><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0113 0c0 5.4-6.5 11-6.5 11z" /><circle cx="12" cy="10" r="2.4" /></>,
+  brick: <><rect x="3" y="5" width="18" height="14" rx="1" /><path d="M3 10h18M3 15h18M9 5v5M15 10v5M9 15v4" /></>,
   chevron: <path d="M9 6l6 6-6 6" />,
   check: <path d="M5 12.5l4.5 4.5L19 7.5" />,
 };
@@ -41,14 +47,14 @@ const Icon = ({ name, size = 22 }) => <svg width={size} height={size} viewBox="0
 const Pill = ({ ok, yes, no }) => <span className={'cp-pill' + (ok ? ' ok' : '')}>{ok && <Icon name="check" size={13} />}{ok ? yes : no}</span>;
 
 // Collapsible card. Content stays mounted (so typed answers survive closing); tiles can open it by id.
-function Acc({ id, title, pill, defaultOpen, children }) {
+function Acc({ id, title, icon, pill, defaultOpen, children }) {
   const [open, setOpen] = React.useState(!!defaultOpen);
   React.useEffect(() => {
     const h = e => { if (e.detail === id) setOpen(true); };
     window.addEventListener('cp-open', h); return () => window.removeEventListener('cp-open', h);
   }, [id]);
   return <div className="cp-card" id={id}>
-    <button type="button" className="cp-acc-head" aria-expanded={open} onClick={() => setOpen(o => !o)}><span className="cp-h">{title}</span><span className="cp-grow">{pill}</span><span className="cp-acc-chev"><Icon name="chevron" size={18} /></span></button>
+    <button type="button" className="cp-acc-head" aria-expanded={open} onClick={() => setOpen(o => !o)}><span className="cp-h">{icon && <span className="cp-hico"><Icon name={icon} size={16} /></span>}{title}</span><span className="cp-grow">{pill}</span><span className="cp-acc-chev"><Icon name="chevron" size={18} /></span></button>
     <div className="cp-acc-body" hidden={!open}>{children}</div>
   </div>;
 }
@@ -117,6 +123,41 @@ function Brick({ api, code, name, initial, done, onSaved }) {
     {lines.map((l, i) => <label className="cp-field" key={i}>Line {i + 1} <span className="cp-muted">({l.length}/20)</span><input value={l} maxLength={20} autoComplete="off" onChange={e => set(i, e.target.value)} /></label>)}
     <button className="cp-btn" disabled={busy || !lines.some(l => l.trim())}>{busy ? 'Saving…' : done ? 'Update my wording' : 'Save my wording'}</button>
   </form>;
+}
+
+// Same open tour times as the website; booking goes straight to the team.
+function WalkThrough({ api, code, name }) {
+  const [slots, setSlots] = React.useState(null);
+  const [pick, setPick] = React.useState(null);
+  const [phone, setPhone] = React.useState('');
+  const [busy, setBusy] = React.useState(false);
+  const [err, setErr] = React.useState('');
+  const [done, setDone] = React.useState(null);
+  const load = React.useCallback(() => api('tour_slots', { code, name }).then(r => setSlots(r.slots || [])).catch(() => setSlots([])), [api, code, name]);
+  React.useEffect(() => { load(); }, [load]);
+  const days = React.useMemo(() => { const m = new Map(); (slots || []).forEach(x => { if (!m.has(x.date)) m.set(x.date, []); m.get(x.date).push(x); }); return [...m.entries()]; }, [slots]);
+  const chosen = (slots || []).find(x => x.id === pick);
+  const time = t => new Date('2000-01-01T' + t).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  const day = d => new Date(d + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+  async function book() {
+    if (busy || !chosen) return;
+    setBusy(true); setErr('');
+    try { const r = await api('tour_book', { code, name, slot_id: pick, phone }); setDone(r.when); }
+    catch (e) { setErr(e.message); setPick(null); load(); }
+    finally { setBusy(false); }
+  }
+  if (done) return <div className="cp-ok" role="status">Your walk-through is booked for {done}. We've emailed you a confirmation.</div>;
+  return <>
+    <p className="cp-muted" style={{ marginTop: 0 }}>Want to see the estate again before your day? Pick a time that works for you.</p>
+    {err && <div className="cp-error" role="alert">{err}</div>}
+    {slots === null ? <p className="cp-muted">Loading available times…</p> : days.length === 0 ? <p className="cp-muted">No open times right now. Use "Message our team" and we'll find a time with you.</p> : <div className="cp-days">
+      {days.map(([d, ts]) => <div className="cp-day" key={d}><b>{day(d)}</b><div className="cp-times">{ts.map(x => <button type="button" key={x.id} className="cp-time" aria-pressed={x.id === pick} onClick={() => setPick(x.id)}>{time(x.start_time)}</button>)}</div></div>)}
+    </div>}
+    {chosen && <>
+      <label className="cp-field">Phone number (optional)<input type="tel" value={phone} onChange={e => setPhone(e.target.value)} /></label>
+      <button type="button" className="cp-btn" disabled={busy} onClick={book}>{busy ? 'Booking…' : 'Confirm ' + time(chosen.start_time) + ', ' + day(chosen.date)}</button>
+    </>}
+  </>;
 }
 
 function MessageTeam({ api, code, name }) {
@@ -234,7 +275,7 @@ export function ClientPayPage({ api }) {
       <div className="cp-cols">
         <div className="cp-col">
           <div className="cp-card" id="cp-payments">
-            <h2>Payments</h2>
+            <h2><span className="cp-hico"><Icon name="card" size={16} /></span>Payments</h2>
             {data.has_schedule && <><div className="cp-big">{money(data.balance_cents)} <span className="cp-muted" style={{ fontFamily: 'system-ui,sans-serif', fontWeight: 400 }}>remaining of {money(data.total_cents)}</span></div>
               <div className="cp-bar"><span style={{ width: pct + '%' }} /></div>
               {data.next_due && <div className="cp-next"><Icon name="calendar" size={18} /><span>Next: {data.next_due.label} — {money(data.next_due.amount_cents)}{data.next_due.due_date ? ' due ' + fmt(data.next_due.due_date, { month: 'short', day: 'numeric', year: 'numeric' }) : ''}</span></div>}</>}
@@ -245,27 +286,25 @@ export function ClientPayPage({ api }) {
               <div ref={ppRef} />
             </> : <p className="cp-muted" style={{ margin: 0 }}>Online payments are not available yet. Please contact us to arrange payment.</p>}
           </div>
-          <Acc id="cp-insurance" title="Certificate of insurance" pill={<Pill ok={data.insurance_uploaded} yes="Received" no="Needed" />} defaultOpen={!data.insurance_uploaded}>
+          <Acc id="cp-insurance" icon="shield" title="Certificate of insurance" pill={<Pill ok={data.insurance_uploaded} yes="Received" no="Needed" />} defaultOpen={!data.insurance_uploaded}>
             <p className="cp-muted" style={{ marginTop: 0 }}>Event insurance is required and due one month before your wedding.</p>
             {data.insurance_uploaded && <div className="cp-ok" role="status">{insNote || 'We have your insurance on file. You can upload a replacement below.'}</div>}
             <label className="cp-field">Upload a PDF, JPG or PNG (up to 8 MB)<input type="file" accept="application/pdf,image/jpeg,image/png" disabled={busy} onChange={e => { uploadInsurance(e.target.files[0]); e.target.value = ''; }} /></label>
           </Acc>
-          <Acc id="cp-message" title="Message our team">
+          <Acc id="cp-message" icon="chat" title="Message our team">
             <MessageTeam api={api} code={code} name={name} />
           </Acc>
-          <div className="cp-card" id="cp-walkthrough">
-            <h2>Second walk-through</h2>
-            <p className="cp-muted" style={{ marginTop: 0 }}>Want to see the estate again before your day? This opens our website's tour schedule. Tap "View tour availability" there to pick a time.</p>
-            <a className="cp-btn" href="https://www.northstarhouse.org/weddings#inquiry" target="_blank" rel="noopener noreferrer">Schedule second walk-through</a>
-          </div>
+          <Acc id="cp-walkthrough" icon="walk" title="Second walk-through">
+            <WalkThrough api={api} code={code} name={name} />
+          </Acc>
         </div>
         <div className="cp-col">
-          <Acc id="cp-brick" title="Your legacy brick" pill={<Pill ok={data.brick_done} yes="Submitted" no="Needed" />} defaultOpen={!data.brick_done}>
+          <Acc id="cp-brick" icon="brick" title="Your legacy brick" pill={<Pill ok={data.brick_done} yes="Submitted" no="Needed" />} defaultOpen={!data.brick_done}>
             <Brick api={api} code={code} name={name} initial={data.brick_lines} done={data.brick_done} onSaved={lines => setData(d => ({ ...d, brick_lines: lines, brick_done: true }))} />
           </Acc>
         </div>
       </div>
-      <Acc id="cp-questionnaire" title="Event questionnaire" pill={<Pill ok={data.questionnaire_done} yes="Completed" no="To do" />} defaultOpen={!data.questionnaire_done}>
+      <Acc id="cp-questionnaire" icon="clipboard" title="Event questionnaire" pill={<Pill ok={data.questionnaire_done} yes="Completed" no="To do" />} defaultOpen={!data.questionnaire_done}>
         <Questionnaire api={api} code={code} name={name} onSaved={() => setData(d => ({ ...d, questionnaire_done: true }))} />
       </Acc>
     </>}
