@@ -111,18 +111,20 @@ function Brick({ api, code, name, initial, done, onSaved }) {
   const [lines, setLines] = React.useState(() => [0, 1, 2].map(i => (initial && initial[i]) || '')), [err, setErr] = React.useState(''), [busy, setBusy] = React.useState(false), [saved, setSaved] = React.useState(false);
   const set = (i, v) => { setSaved(false); setLines(ls => ls.map((l, j) => (j === i ? v.slice(0, 20) : l))); };
   async function save(e) {
-    e.preventDefault(); if (busy) return; setBusy(true); setErr('');
+    e.preventDefault(); if (busy) return;
+    if (!window.confirm('Submit this wording? Once submitted it cannot be changed here.')) return;
+    setBusy(true); setErr('');
     try { const r = await api('brick_save', { code, name, lines }); setSaved(true); onSaved(r.brick_lines); } catch (x) { setErr(x.message); } finally { setBusy(false); }
   }
   return <form onSubmit={save}>
-    <p className="cp-muted">Every wedding includes an engraved brick on the grounds. Choose your wording below: 3 lines, up to 20 characters each, including spaces and punctuation.</p>
+    <p className="cp-muted">Every wedding includes an engraved brick on the grounds. Choose your wording below: 3 lines, up to 20 characters each, including spaces and punctuation.{!done && ' Once you submit, it cannot be changed, so please check spelling.'}</p>
     {err && <div className="cp-error" role="alert">{err}</div>}
-    {saved && <div className="cp-ok" role="status">Saved. Thank you! You can update your wording any time. If the brick has already been ordered, please contact the venue.</div>}
+    {done && <div className="cp-ok" role="status">{saved ? 'Submitted. Thank you!' : 'Your wording has been submitted.'} It can no longer be changed here. If something needs to change, please contact the venue.</div>}
     <div style={{ background: '#e9e1d3', border: '2px solid #b9ab92', padding: '18px 12px', margin: '0 0 16px', textAlign: 'center', fontFamily: 'Cardo,Georgia,serif', letterSpacing: 2, minHeight: 96 }} aria-label="Brick preview">
       {lines.map((l, i) => <div key={i} style={{ minHeight: 26, fontSize: 18, color: '#4a4033' }}>{l || ' '}</div>)}
     </div>
-    {lines.map((l, i) => <label className="cp-field" key={i}>Line {i + 1} <span className="cp-muted">({l.length}/20)</span><input value={l} maxLength={20} autoComplete="off" onChange={e => set(i, e.target.value)} /></label>)}
-    <button className="cp-btn" disabled={busy || !lines.some(l => l.trim())}>{busy ? 'Saving…' : done ? 'Update my wording' : 'Save my wording'}</button>
+    {lines.map((l, i) => <label className="cp-field" key={i}>Line {i + 1} <span className="cp-muted">({l.length}/20)</span><input value={l} maxLength={20} autoComplete="off" disabled={done} onChange={e => set(i, e.target.value)} /></label>)}
+    {!done && <button className="cp-btn" disabled={busy || !lines.some(l => l.trim())}>{busy ? 'Submitting…' : 'Submit my wording'}</button>}
   </form>;
 }
 
