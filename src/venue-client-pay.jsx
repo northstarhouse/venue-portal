@@ -11,7 +11,7 @@ const style = `.cp-page{overflow-x:hidden;--gold:#886c44;--ink:#2c2418;--muted:#
 .cp-head-main{position:relative;z-index:1;max-width:62%;padding-top:6px}.cp-page .cp-head h1{font-size:clamp(28px,4vw,40px);margin:36px 0 18px}
 .cp-sub{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:14px;flex-wrap:wrap}.cp-sub i{width:1px;height:14px;background:#b9ab92;display:inline-block}
 .cp-head-side{position:relative;z-index:1;align-self:stretch;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-end}.cp-countdown{background:var(--gold);color:#fff;padding:12px 28px 10px;text-align:center;display:inline-block;min-width:150px}.cp-countdown strong{display:block;font-family:Cardo,Georgia,serif;font-size:38px;font-weight:400;line-height:1.05}.cp-countdown hr{border:0;border-top:1px solid rgba(255,255,255,.55);margin:5px 16px 7px}.cp-countdown span{font-size:11px;letter-spacing:.2em;text-transform:uppercase}
-.cp-tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:18px;position:relative;z-index:1}
+.cp-tiles{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:18px;position:relative;z-index:1}
 .cp-tile{display:flex;align-items:center;gap:14px;text-align:left;background:rgba(255,253,250,.9);border:1px solid var(--line);border-left:3px solid #c9a46a;padding:14px 14px 14px 16px;font:inherit;cursor:pointer;color:inherit;box-shadow:0 1px 2px rgba(60,45,20,.05)}.cp-tile:hover{background:#fff}.cp-ico{position:relative}.cp-tick{position:absolute;right:-5px;bottom:-5px;width:25px;height:25px;border-radius:50%;background:var(--gold);color:#fff;border:2px solid #fffdfa;display:flex;align-items:center;justify-content:center}
 .cp-ico{flex:none;width:46px;height:46px;border-radius:50%;background:#f1e9da;color:#8a6c40;display:flex;align-items:center;justify-content:center}
 .cp-txt{flex:1;min-width:0}.cp-tile small{display:block;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:700}.cp-tile b{display:block;font-family:Cardo,Georgia,serif;font-size:22px;font-weight:700;line-height:1.2;margin:3px 0 1px}.cp-tile em{font-style:normal;font-size:12px;color:var(--muted)}.cp-chev{display:none}
@@ -28,6 +28,7 @@ const style = `.cp-page{overflow-x:hidden;--gold:#886c44;--ink:#2c2418;--muted:#
 .cp-check{display:flex;gap:8px;align-items:center;font-weight:400;margin:4px 0}.cp-check input{width:auto;margin:0}
 .cp-qcols{column-count:2;column-gap:44px;margin-bottom:22px}.cp-qsec-wrap{break-inside:avoid-column;margin-bottom:30px}.cp-qcols .cp-sec{margin-top:0}@media(max-width:820px){.cp-qcols{column-count:1}}
 .cp-sec{font-family:Cardo,Georgia,serif;font-weight:700;font-size:19px;color:var(--gold);text-align:center;margin:30px 0 18px;padding:12px 8px;border-top:1px solid var(--gold);border-bottom:1px solid var(--gold)}.cp-lab{display:block;font-weight:400;font-size:15px;line-height:1.45}.cp-note{display:block;font-style:italic;font-weight:400;color:var(--muted);font-size:13px;margin-top:2px}.cp-fieldimg{display:block;width:100%;height:auto;margin:0 0 16px;border:1px solid var(--line)}.cp-field input::placeholder,.cp-field textarea::placeholder{color:#9a9488;font-size:15px;font-weight:400}
+@media(max-width:1100px){.cp-tiles{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:820px){.cp-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}.cp-tile{gap:10px;padding:12px}.cp-ico{width:38px;height:38px}.cp-chev{display:none}.cp-cols{grid-template-columns:1fr}.cp-head{flex-direction:column;min-height:0;padding-top:96px}.cp-head-img{top:-28px;left:-16px;right:-16px;bottom:auto;height:150px;width:auto;opacity:.6;-webkit-mask-image:linear-gradient(to bottom,#000 40%,transparent 100%);mask-image:linear-gradient(to bottom,#000 40%,transparent 100%)}.cp-head-main{max-width:100%}.cp-head-side{width:100%;flex-direction:row;align-items:center;justify-content:flex-start}}`;
 const money = c => (c / 100).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
 
@@ -128,14 +129,16 @@ function Brick({ api, code, name, initial, done, onSaved }) {
   </form>;
 }
 
+const fmtWalk = (w, o) => new Date(w.date + 'T' + w.start_time).toLocaleString('en-US', o);
+
 // Same open tour times as the website; booking goes straight to the team.
-function WalkThrough({ api, code, name }) {
+// booked = the couple's walk-through ({ date, start_time }) once scheduled.
+function WalkThrough({ api, code, name, booked, onBooked }) {
   const [slots, setSlots] = React.useState(null);
   const [pick, setPick] = React.useState(null);
   const [phone, setPhone] = React.useState('');
   const [busy, setBusy] = React.useState(false);
   const [err, setErr] = React.useState('');
-  const [done, setDone] = React.useState(null);
   const load = React.useCallback(() => api('tour_slots', { code, name }).then(r => setSlots(r.slots || [])).catch(() => setSlots([])), [api, code, name]);
   React.useEffect(() => { load(); }, [load]);
   const days = React.useMemo(() => { const m = new Map(); (slots || []).forEach(x => { if (!m.has(x.date)) m.set(x.date, []); m.get(x.date).push(x); }); return [...m.entries()]; }, [slots]);
@@ -145,11 +148,11 @@ function WalkThrough({ api, code, name }) {
   async function book() {
     if (busy || !chosen) return;
     setBusy(true); setErr('');
-    try { const r = await api('tour_book', { code, name, slot_id: pick, phone }); setDone(r.when); }
+    try { const r = await api('tour_book', { code, name, slot_id: pick, phone }); onBooked(r.walkthrough); }
     catch (e) { setErr(e.message); setPick(null); load(); }
     finally { setBusy(false); }
   }
-  if (done) return <div className="cp-ok" role="status">Your walk-through is booked for {done}. We've emailed you a confirmation.</div>;
+  if (booked) return <div className="cp-ok" role="status">Your walk-through is scheduled for {fmtWalk(booked, { weekday: 'long', month: 'long', day: 'numeric' })} at {fmtWalk(booked, { hour: 'numeric', minute: '2-digit' })}. To change it, use "Message our team".</div>;
   return <>
     <p className="cp-muted" style={{ marginTop: 0 }}>Want to see the estate again before your day? Pick a time that works for you.</p>
     {err && <div className="cp-error" role="alert">{err}</div>}
@@ -275,6 +278,7 @@ export function ClientPayPage({ api }) {
         {tile('cp-insurance', 'shield', 'Insurance', data.insurance_uploaded ? '' : 'To do', 'Certificate of insurance', data.insurance_uploaded)}
         {tile('cp-questionnaire', 'clipboard', 'Questionnaire', data.questionnaire_done ? '' : 'To do', 'Wedding day details', data.questionnaire_done)}
         {tile('cp-brick', 'doc', 'Legacy brick', data.brick_done ? '' : 'To do', '3 lines, 20 characters', data.brick_done)}
+        {tile('cp-walkthrough', 'walk', 'Walk-through', data.walkthrough ? '' : 'Optional', data.walkthrough ? 'Scheduled ' + fmtWalk(data.walkthrough, { month: 'short', day: 'numeric' }) + ', ' + fmtWalk(data.walkthrough, { hour: 'numeric', minute: '2-digit' }) : 'Second visit to the estate', data.walkthrough ? true : null)}
       </div>
       <div className="cp-cols">
         <div className="cp-col">
@@ -295,8 +299,8 @@ export function ClientPayPage({ api }) {
             {data.insurance_uploaded && <div className="cp-ok" role="status">{insNote || 'We have your insurance on file. You can upload a replacement below.'}</div>}
             <label className="cp-field">Upload a PDF, JPG or PNG (up to 8 MB)<input type="file" accept="application/pdf,image/jpeg,image/png" disabled={busy} onChange={e => { uploadInsurance(e.target.files[0]); e.target.value = ''; }} /></label>
           </Acc>
-          <Acc id="cp-walkthrough" icon="walk" title="Second walk-through">
-            <WalkThrough api={api} code={code} name={name} />
+          <Acc id="cp-walkthrough" icon="walk" title="Second walk-through" pill={<Pill ok={!!data.walkthrough} yes="Scheduled" no="Optional" />}>
+            <WalkThrough api={api} code={code} name={name} booked={data.walkthrough} onBooked={w => setData(d => ({ ...d, walkthrough: w }))} />
           </Acc>
         </div>
         <div className="cp-col">
