@@ -86,7 +86,7 @@ function Questionnaire({ api, code, name, onSaved }) {
     <p className="cp-muted">We're so excited to host your wedding at the North Star House! To help us prepare, we're collecting important event details. Our team will review everything and connect with you if we need to coordinate on any specific details.</p>
     {form.submitted && <p className="cp-muted"><em>Your answers are saved. You can change them any time before your event.</em></p>}
     {err && <div className="cp-error" role="alert">{err}</div>}
-    {done && <div className="cp-ok" role="status">Saved. Thank you!</div>}
+    {done && <div className="cp-ok" role="status">Submitted. Thank you!</div>}
     <div className="cp-qcols">
     {groups.map((g, gi) => <div className="cp-qsec-wrap" key={gi}>
     {g.section && <h3 className="cp-sec">{g.section}</h3>}
@@ -103,7 +103,7 @@ function Questionnaire({ api, code, name, onSaved }) {
     </div>)}
     </div>)}
     </div>
-    <button className="cp-btn" disabled={busy}>{busy ? 'Saving…' : form.submitted ? 'Update my answers' : 'Save & continue'}</button>
+    <button className="cp-btn" disabled={busy}>{busy ? 'Saving…' : form.submitted ? 'Update my answers' : 'Submit'}</button>
   </form>;
 }
 
