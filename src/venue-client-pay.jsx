@@ -295,9 +295,6 @@ export function ClientPayPage({ api }) {
             {data.insurance_uploaded && <div className="cp-ok" role="status">{insNote || 'We have your insurance on file. You can upload a replacement below.'}</div>}
             <label className="cp-field">Upload a PDF, JPG or PNG (up to 8 MB)<input type="file" accept="application/pdf,image/jpeg,image/png" disabled={busy} onChange={e => { uploadInsurance(e.target.files[0]); e.target.value = ''; }} /></label>
           </Acc>
-          <Acc id="cp-message" icon="chat" title="Message our team">
-            <MessageTeam api={api} code={code} name={name} />
-          </Acc>
           <Acc id="cp-walkthrough" icon="walk" title="Second walk-through">
             <WalkThrough api={api} code={code} name={name} />
           </Acc>
@@ -305,6 +302,9 @@ export function ClientPayPage({ api }) {
         <div className="cp-col">
           <Acc id="cp-brick" icon="brick" title="Your legacy brick" pill={<Pill ok={data.brick_done} yes="Submitted" no="Needed" />} defaultOpen={!data.brick_done}>
             <Brick api={api} code={code} name={name} initial={data.brick_lines} done={data.brick_done} onSaved={lines => setData(d => ({ ...d, brick_lines: lines, brick_done: true }))} />
+          </Acc>
+          <Acc id="cp-message" icon="chat" title="Message our team">
+            <MessageTeam api={api} code={code} name={name} />
           </Acc>
         </div>
       </div>
