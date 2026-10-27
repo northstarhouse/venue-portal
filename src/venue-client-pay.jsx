@@ -1,6 +1,6 @@
 // Public clients-only page (#pay): venue code -> event dashboard (payments, insurance, questionnaire, brick, message).
 import { formatVenueCode } from './venue-code.js';
-const style = `.cp-page{overflow-x:hidden;--gold:#886c44;--ink:#2c2418;--muted:#6f685c;--line:#e8e0d2;--paper:#fffdfa;min-height:100vh;background:#fbf8f2;color:var(--ink);font-family:system-ui,-apple-system,'Segoe UI',sans-serif;padding:28px 16px 48px}.cp-shell{max-width:560px;margin:0 auto}.cp-shell.wide{max-width:1080px}
+const style = `.cp-page{overflow-x:hidden;--gold:#886c44;--ink:#2c2418;--muted:#6f685c;--line:#cfc2aa;--paper:#fffdfa;min-height:100vh;background:#fbf8f2;color:var(--ink);font-family:system-ui,-apple-system,'Segoe UI',sans-serif;padding:28px 16px 48px}.cp-shell{max-width:560px;margin:0 auto}.cp-shell.wide{max-width:1080px}
 .cp-brandrow{display:flex;align-items:center;gap:14px;letter-spacing:.28em;font-size:11px;color:var(--gold);font-weight:700}.cp-brandrow:after{content:"";height:1px;background:var(--gold);opacity:.45;flex:1;min-width:48px}
 .cp-page h1{font-family:Cardo,Georgia,serif;font-weight:700;font-size:28px;line-height:1.15;margin:8px 0 18px}
 .cp-head{position:relative;display:flex;justify-content:space-between;align-items:flex-start;gap:16px;min-height:196px;margin-bottom:18px}
