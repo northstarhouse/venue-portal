@@ -118,15 +118,17 @@ function AgreementCard({ api, code, name, baseUrl, apiKey }) {
   }
   function close() { setToken(''); load(); }
   if (state === undefined) return null;
+  const legacy = !!(state && state.legacy);
   const clients = state ? state.signers.filter(s => s.role === 'client') : [];
   const venue = state ? state.signers.filter(s => s.role === 'venue') : [];
   const mine = clients.filter(s => s.status !== 'signed');
-  const allSigned = state && state.status === 'completed';
+  const allSigned = state && (state.status === 'completed' || legacy);
   const pill = !state ? <Pill ok={false} yes="" no="Coming soon" /> : allSigned ? <Pill ok={true} yes="Fully signed" no="" /> : mine.length ? <Pill ok={false} yes="" no="Needs your signature" /> : <Pill ok={false} yes="" no="Waiting for the venue" />;
   return <>
     <Acc id="cp-agreement" icon="doc" title="Rental agreement" pill={pill} defaultOpen={!!state && !allSigned}>
       {!state && <p className="cp-muted" style={{ marginTop: 0 }}>Your rental agreement isn't ready yet. We'll email you as soon as it's available, and you'll be able to sign it right here.</p>}
-      {state && <>
+      {legacy && <p className="cp-muted" style={{ marginTop: 0 }}>Your rental agreement is signed and on file with North Star House.</p>}
+      {state && !legacy && <>
         <p className="cp-muted" style={{ marginTop: 0 }}>{allSigned ? 'Everyone has signed. You can open your agreement any time to review it or download a copy.' : 'Your rental agreement is here to review any time. We countersign once every client has signed.'}</p>
         {clients.map(s => <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', margin: '10px 0' }}>
           <span style={{ flex: 1, minWidth: 140 }}><strong>{s.name}</strong><br /><span className="cp-muted">{s.status === 'signed' ? 'Signed ' + dateOf(s.signed_at) : 'Not signed yet'}</span></span>
