@@ -52,7 +52,8 @@ const Pill = ({ ok, yes, no }) => <span className={'cp-pill' + (ok ? ' ok' : '')
 // Collapsible card. Content stays mounted (so typed answers survive closing); tiles can open it by id.
 // Until a client has signed the rental agreement, this is what the couple sees after entering their venue code.
 // Once someone signs, the event page unlocks (the Rental agreement card there keeps prompting anyone who still needs to sign).
-function AgreementGate({ api, code, name, baseUrl, apiKey, agreement, eventName, onUnlock }) {
+function AgreementGate({ api, code, name, baseUrl, apiKey, agreement: first, eventName, onUnlock }) {
+  const [agreement, setAgreement] = React.useState(first);
   const [token, setToken] = React.useState('');
   const [busy, setBusy] = React.useState('');
   const [err, setErr] = React.useState('');
@@ -69,7 +70,8 @@ function AgreementGate({ api, code, name, baseUrl, apiKey, agreement, eventName,
     try {
       const o = await api('agreement_status', { code, name });
       const a = o.agreement;
-      if (!a || a.status !== 'pending' || a.signers.some(s => s.role === 'client' && s.status === 'signed')) onUnlock();
+      if (!a || a.status !== 'pending' || a.signers.filter(s => s.role === 'client').every(s => s.status === 'signed')) onUnlock();
+      else setAgreement(a); // one partner signed: stay here so the other can sign on the same device, no log out
     } catch (e) { /* stay on this screen */ }
   }
   if (token) return <div style={{ position: 'fixed', inset: 0, background: '#fbf8f2', zIndex: 1000, overflow: 'auto' }}>
@@ -86,9 +88,13 @@ function AgreementGate({ api, code, name, baseUrl, apiKey, agreement, eventName,
       <h2>Your rental agreement</h2>
       <p className="cp-muted" style={{ marginTop: 0 }}>Welcome. Before your event page opens, please review and sign your rental agreement. It takes a few minutes: you read each numbered term and initial it, confirm with a code we email you, and sign. As soon as you submit, your event page unlocks.</p>
       {clients.map(c => <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', margin: '12px 0' }}>
-        <span style={{ flex: 1, minWidth: 140 }}><strong>{c.name}</strong></span>
-        <button type="button" className="cp-btn" disabled={!!busy} onClick={() => open(c.id)}>{busy === c.id ? 'Opening…' : 'Review & sign as ' + String(c.name).split(' ')[0]}</button>
+        <span style={{ flex: 1, minWidth: 140 }}><strong>{c.name}</strong>{c.status === 'signed' && <><br /><span className="cp-muted">Signed ✓</span></>}</span>
+        {c.status !== 'signed' && <button type="button" className="cp-btn" disabled={!!busy} onClick={() => open(c.id)}>{busy === c.id ? 'Opening…' : 'Review & sign as ' + String(c.name).split(' ')[0]}</button>}
       </div>)}
+      {clients.some(c => c.status === 'signed') && <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid #e6dfd3' }}>
+        <p className="cp-muted" style={{ marginTop: 0 }}>You can sign for each person right here, one after the other. Whenever you're ready, continue to your event page. Anyone who hasn't signed yet can still do it from the Rental agreement card there.</p>
+        <button type="button" className="cp-btn-quiet" onClick={onUnlock}>Continue to my event page</button>
+      </div>}
       {err && <div className="cp-error" role="alert">{err}</div>}
     </div>
   </>;
@@ -276,7 +282,7 @@ function MessageTeam({ api, code, name }) {
 }
 
 export function ClientPayPage({ api, baseUrl, apiKey }) {
-  const [code, setCode] = React.useState(''), [name, setName] = React.useState(''), [needsName, setNeedsName] = React.useState(false);
+  const [code, setCode] = React.useState(() => { const h = new URLSearchParams(window.location.hash.slice(1)).get('code'); return h ? formatVenueCode(h, true) : ''; }), [name, setName] = React.useState(''), [needsName, setNeedsName] = React.useState(false);
   const [data, setData] = React.useState(null), [error, setError] = React.useState(''), [busy, setBusy] = React.useState(false);
   const [amount, setAmount] = React.useState(''), [receipt, setReceipt] = React.useState(null), [insNote, setInsNote] = React.useState('');
   const [payError, setPayError] = React.useState('');
