@@ -283,7 +283,6 @@ function MessageTeam({ api, code, name }) {
       <label className="cp-field">Who is this from?
         <select value={pick} onChange={e => setPick(Number(e.target.value))}>{people.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select>
       </label>
-      {me && (me.email || me.phone) && <p className="cp-muted" style={{ marginTop: -6 }}>{[me.email, me.phone].filter(Boolean).join(' · ')}</p>}
       <div className="cp-field" role="radiogroup" aria-label="How would you like us to reply?">
         How would you like us to reply?
         <label className="cp-check"><input type="radio" name="reply-via" checked={via === 'email'} onChange={() => setVia('email')} />Email{me && me.email ? ' (' + me.email + ')' : ''}</label>
