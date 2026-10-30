@@ -127,7 +127,7 @@ function AgreementCard({ api, code, name, baseUrl, apiKey }) {
     <Acc id="cp-agreement" icon="doc" title="Rental agreement" pill={pill} defaultOpen={!!state && !allSigned}>
       {!state && <p className="cp-muted" style={{ marginTop: 0 }}>Your rental agreement isn't ready yet. We'll email you as soon as it's available, and you'll be able to sign it right here.</p>}
       {state && <>
-        <p className="cp-muted" style={{ marginTop: 0 }}>{allSigned ? 'Everyone has signed. You can open your agreement any time to review it or download a copy.' : 'Each person on the agreement signs for themselves. You will initial each numbered term and confirm with a code we email you. We countersign after every client has signed.'}</p>
+        <p className="cp-muted" style={{ marginTop: 0 }}>{allSigned ? 'Everyone has signed. You can open your agreement any time to review it or download a copy.' : 'Your rental agreement is here to review any time. We countersign once every client has signed.'}</p>
         {clients.map(s => <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', margin: '10px 0' }}>
           <span style={{ flex: 1, minWidth: 140 }}><strong>{s.name}</strong><br /><span className="cp-muted">{s.status === 'signed' ? 'Signed ' + dateOf(s.signed_at) : 'Not signed yet'}</span></span>
           {s.status !== 'signed' && <button type="button" className="cp-btn" disabled={!!busy} onClick={() => open(s.id)}>{busy === s.id ? 'Opening…' : 'Review & sign'}</button>}
