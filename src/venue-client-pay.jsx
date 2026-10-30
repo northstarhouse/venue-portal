@@ -50,6 +50,50 @@ const Icon = ({ name, size = 22 }) => <svg width={size} height={size} viewBox="0
 const Pill = ({ ok, yes, no }) => <span className={'cp-pill' + (ok ? ' ok' : '')}>{ok && <Icon name="check" size={13} />}{ok ? yes : no}</span>;
 
 // Collapsible card. Content stays mounted (so typed answers survive closing); tiles can open it by id.
+// Until a client has signed the rental agreement, this is what the couple sees after entering their venue code.
+// Once someone signs, the event page unlocks (the Rental agreement card there keeps prompting anyone who still needs to sign).
+function AgreementGate({ api, code, name, baseUrl, apiKey, agreement, eventName, onUnlock }) {
+  const [token, setToken] = React.useState('');
+  const [busy, setBusy] = React.useState('');
+  const [err, setErr] = React.useState('');
+  const agreementApi = React.useMemo(() => createAgreementApi({ baseUrl, apiKey }), [baseUrl, apiKey]);
+  const clients = agreement.signers.filter(s => s.role === 'client');
+  async function open(signerId) {
+    setErr(''); setBusy(signerId);
+    try { const o = await api('agreement_link', { code, name, signer_id: signerId }); setToken(o.token); }
+    catch (e) { setErr(e.message || 'Could not open the agreement. Please try again.'); }
+    setBusy('');
+  }
+  async function back() {
+    setToken('');
+    try {
+      const o = await api('agreement_status', { code, name });
+      const a = o.agreement;
+      if (!a || a.status !== 'pending' || a.signers.some(s => s.role === 'client' && s.status === 'signed')) onUnlock();
+    } catch (e) { /* stay on this screen */ }
+  }
+  if (token) return <div style={{ position: 'fixed', inset: 0, background: '#fbf8f2', zIndex: 1000, overflow: 'auto' }}>
+    <div style={{ position: 'sticky', top: 0, background: '#fffdfa', borderBottom: '1px solid #cfc2aa', padding: '10px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 2 }}>
+      <span style={{ letterSpacing: '.2em', fontSize: 11, color: '#886c44', fontWeight: 700 }}>NORTH STAR HOUSE</span>
+      <button type="button" className="cp-btn" onClick={back}>I'm done, continue</button>
+    </div>
+    <AgreementSigningPage api={agreementApi} token={token} />
+  </div>;
+  return <>
+    <div className="cp-brandrow">NORTH STAR HOUSE</div>
+    <h1>{eventName ? eventName : 'Your event'}</h1>
+    <div className="cp-card" style={{ maxWidth: 640 }}>
+      <h2>Your rental agreement</h2>
+      <p className="cp-muted" style={{ marginTop: 0 }}>Welcome. Before your event page opens, please review and sign your rental agreement. It takes a few minutes: you read each numbered term and initial it, confirm with a code we email you, and sign. As soon as you submit, your event page unlocks.</p>
+      {clients.map(c => <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', margin: '12px 0' }}>
+        <span style={{ flex: 1, minWidth: 140 }}><strong>{c.name}</strong></span>
+        <button type="button" className="cp-btn" disabled={!!busy} onClick={() => open(c.id)}>{busy === c.id ? 'Opening…' : 'Review & sign as ' + String(c.name).split(' ')[0]}</button>
+      </div>)}
+      {err && <div className="cp-error" role="alert">{err}</div>}
+    </div>
+  </>;
+}
+
 // The rental agreement: status for each signer, and signing right here (same emailed-code verification as the email link).
 function AgreementCard({ api, code, name, baseUrl, apiKey }) {
   const dateOf = ts => new Date(ts).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
@@ -236,6 +280,7 @@ export function ClientPayPage({ api, baseUrl, apiKey }) {
   const [data, setData] = React.useState(null), [error, setError] = React.useState(''), [busy, setBusy] = React.useState(false);
   const [amount, setAmount] = React.useState(''), [receipt, setReceipt] = React.useState(null), [insNote, setInsNote] = React.useState('');
   const [payError, setPayError] = React.useState('');
+  const [gate, setGate] = React.useState(null);
   const ppRef = React.useRef(null), live = React.useRef({});
   live.current = { code, name, amount };
 
@@ -243,7 +288,9 @@ export function ClientPayPage({ api, baseUrl, apiKey }) {
     e && e.preventDefault(); if (busy) return; setBusy(true); setError('');
     try {
       const d = await api('lookup', { code, name });
-      setData(d); setNeedsName(false);
+      let gateAgreement = null;
+      try { const o = await api('agreement_status', { code, name }); const a = o.agreement; if (a && a.status === 'pending' && !a.signers.some(x => x.role === 'client' && x.status === 'signed')) gateAgreement = a; } catch (e) { /* no gate if the agreement can't be checked */ }
+      setGate(gateAgreement); setData(d); setNeedsName(false);
       setAmount(d.next_due ? (d.next_due.amount_cents / 100).toFixed(2) : '');
     } catch (err) { setNeedsName(!!err.needs_name); setError(err.message); } finally { setBusy(false); }
   }
@@ -271,7 +318,7 @@ export function ClientPayPage({ api, baseUrl, apiKey }) {
       }).render(ppRef.current);
     }).catch(err => setPayError(err.message));
     return () => { cancelled = true; };
-  }, [data && data.paypal_client_id, !!data]);
+  }, [data && data.paypal_client_id, !!data, !!gate]);
 
   async function uploadInsurance(file) {
     if (!file) return; setInsNote(''); setError('');
@@ -306,7 +353,7 @@ export function ClientPayPage({ api, baseUrl, apiKey }) {
         {needsName && <label className="cp-field">Last name on the booking<input value={name} onChange={e => setName(e.target.value)} autoComplete="off" /></label>}
         <button className="cp-btn" disabled={busy || !code.trim()}>{busy ? 'Checking…' : 'Continue'}</button>
       </form>
-    </> : <>
+    </> : gate ? <AgreementGate api={api} code={code} name={name} baseUrl={baseUrl} apiKey={apiKey} agreement={gate} eventName={data.name} onUnlock={() => setGate(null)} /> : <>
       <header className="cp-head">
         <div className="cp-head-img" aria-hidden="true" />
         <div className="cp-head-main">
