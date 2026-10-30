@@ -267,20 +267,31 @@ function WalkThrough({ api, code, name, booked, onBooked }) {
 }
 
 function MessageTeam({ api, code, name }) {
-  const [who, setWho] = React.useState(''), [email, setEmail] = React.useState(''), [text, setText] = React.useState('');
+  const [people, setPeople] = React.useState(null), [pick, setPick] = React.useState(0), [via, setVia] = React.useState('email'), [text, setText] = React.useState('');
   const [err, setErr] = React.useState(''), [busy, setBusy] = React.useState(false), [ok, setOk] = React.useState(false);
+  React.useEffect(() => { api('message_contacts', { code, name }).then(o => setPeople(o.contacts || [])).catch(() => setPeople([])); }, [api, code, name]);
   async function send(e) {
     e.preventDefault(); if (busy) return; setBusy(true); setErr(''); setOk(false);
-    try { await api('send_message', { code, name, contact_name: who, contact_email: email, message: text }); setOk(true); setText(''); } catch (x) { setErr(x.message); } finally { setBusy(false); }
+    try { await api('send_message', { code, name, contact_id: pick, reply_via: via, message: text }); setOk(true); setText(''); } catch (x) { setErr(x.message); } finally { setBusy(false); }
   }
+  const me = people && people[pick];
   return <form onSubmit={send}>
     <p className="cp-muted">Questions, changes, or something we should know? Send a note straight to our venue team.</p>
     {err && <div className="cp-error" role="alert">{err}</div>}
     {ok && <div className="cp-ok" role="status">Message sent. Our team will get back to you soon.</div>}
-    <label className="cp-field">Your name<input value={who} onChange={e => setWho(e.target.value)} autoComplete="name" /></label>
-    <label className="cp-field">Your email <span className="cp-muted">(optional, if different from the one on your booking)</span><input type="email" value={email} onChange={e => setEmail(e.target.value)} autoComplete="email" /></label>
-    <label className="cp-field">Message <span className="cp-muted">({text.length}/2000)</span><textarea rows={5} maxLength={2000} value={text} onChange={e => { setOk(false); setText(e.target.value); }} /></label>
-    <button className="cp-btn" disabled={busy || !who.trim() || !text.trim()}>{busy ? 'Sending…' : 'Send message'}</button>
+    {people === null ? <p className="cp-muted">Loading…</p> : <>
+      <label className="cp-field">Who is this from?
+        <select value={pick} onChange={e => setPick(Number(e.target.value))}>{people.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select>
+      </label>
+      {me && (me.email || me.phone) && <p className="cp-muted" style={{ marginTop: -6 }}>{[me.email, me.phone].filter(Boolean).join(' · ')}</p>}
+      <div className="cp-field" role="radiogroup" aria-label="How would you like us to reply?">
+        How would you like us to reply?
+        <label className="cp-check"><input type="radio" name="reply-via" checked={via === 'email'} onChange={() => setVia('email')} />Email{me && me.email ? ' (' + me.email + ')' : ''}</label>
+        <label className="cp-check"><input type="radio" name="reply-via" checked={via === 'phone'} onChange={() => setVia('phone')} />Phone call{me && me.phone ? ' (' + me.phone + ')' : ''}</label>
+      </div>
+      <label className="cp-field">Message <span className="cp-muted">({text.length}/2000)</span><textarea rows={5} maxLength={2000} value={text} onChange={e => { setOk(false); setText(e.target.value); }} /></label>
+      <button className="cp-btn" disabled={busy || !text.trim() || !me}>{busy ? 'Sending…' : 'Send message'}</button>
+    </>}
   </form>;
 }
 
