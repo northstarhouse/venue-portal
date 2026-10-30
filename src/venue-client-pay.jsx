@@ -130,8 +130,9 @@ function AgreementCard({ api, code, name, baseUrl, apiKey }) {
         <p className="cp-muted" style={{ marginTop: 0 }}>{allSigned ? 'Everyone has signed. You can open your agreement any time to review it or download a copy.' : 'Each person on the agreement signs for themselves. You will initial each numbered term and confirm with a code we email you. We countersign after every client has signed.'}</p>
         {clients.map(s => <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', margin: '10px 0' }}>
           <span style={{ flex: 1, minWidth: 140 }}><strong>{s.name}</strong><br /><span className="cp-muted">{s.status === 'signed' ? 'Signed ' + dateOf(s.signed_at) : 'Not signed yet'}</span></span>
-          <button type="button" className={s.status === 'signed' ? 'cp-btn-quiet' : 'cp-btn'} disabled={!!busy} onClick={() => open(s.id)}>{busy === s.id ? 'Opening…' : s.status === 'signed' ? 'View my copy' : 'Review & sign'}</button>
+          {s.status !== 'signed' && <button type="button" className="cp-btn" disabled={!!busy} onClick={() => open(s.id)}>{busy === s.id ? 'Opening…' : 'Review & sign'}</button>}
         </div>)}
+        {clients.some(c => c.status === 'signed') && (() => { const viewer = clients.find(c => c.status === 'signed'); return <div style={{ margin: '14px 0 4px' }}><button type="button" className="cp-btn-quiet" disabled={!!busy} onClick={() => open(viewer.id)}>{busy === viewer.id ? 'Opening…' : 'View rental agreement'}</button></div>; })()}
         {venue.map(s => <p key={s.id} className="cp-muted" style={{ margin: '10px 0 0' }}>North Star House countersignature: {s.status === 'signed' ? 'signed ' + dateOf(s.signed_at) : clients.every(c => c.status === 'signed') ? 'in progress' : 'after all clients have signed'}</p>)}
       </>}
       {err && <div className="cp-error" role="alert" style={{ marginTop: 10 }}>{err}</div>}
