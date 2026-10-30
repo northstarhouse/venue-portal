@@ -1,5 +1,6 @@
 // Public clients-only page (#pay): venue code -> event dashboard (payments, insurance, questionnaire, brick, message).
 import { formatVenueCode } from './venue-code.js';
+import { AgreementSigningPage, createAgreementApi } from './venue-contracts.jsx';
 const style = `.cp-page{overflow-x:hidden;--gold:#886c44;--ink:#2c2418;--muted:#6f685c;--line:#cfc2aa;--paper:#fffdfa;min-height:100vh;background:#fbf8f2;color:var(--ink);font-family:system-ui,-apple-system,'Segoe UI',sans-serif;padding:28px 16px 48px}.cp-shell{max-width:560px;margin:0 auto}.cp-shell.wide{max-width:1080px}
 .cp-brandrow{display:flex;align-items:center;gap:14px;letter-spacing:.28em;font-size:11px;color:var(--gold);font-weight:700}.cp-brandrow:after{content:"";height:1px;background:var(--gold);opacity:.45;flex:1;min-width:48px}
 .cp-page h1{font-family:Cardo,Georgia,serif;font-weight:700;font-size:28px;line-height:1.15;margin:8px 0 18px}
@@ -21,7 +22,7 @@ const style = `.cp-page{overflow-x:hidden;--gold:#886c44;--ink:#2c2418;--muted:#
 .cp-acc-head{width:100%;display:flex;align-items:center;gap:12px;background:none;border:0;padding:0;font:inherit;color:inherit;cursor:pointer;text-align:left}.cp-acc-head .cp-grow{flex:1}.cp-acc-chev{transition:transform .15s;color:#7b7366}.cp-acc-head[aria-expanded=true] .cp-acc-chev{transform:rotate(90deg)}.cp-acc-body{margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}.cp-acc-body[hidden]{display:none}
 .cp-pill{white-space:nowrap;display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:4px 12px;border-radius:999px;background:#faf0e6;color:#9a5d22}.cp-pill.ok{background:#e4eee4;color:#3f6b47}
 .cp-field{display:block;font-size:13px;font-weight:600;margin-bottom:14px}.cp-field input,.cp-field textarea,.cp-field select{display:block;width:100%;box-sizing:border-box;margin-top:6px;border:1px solid #dcd3c4;background:#fff;border-radius:0;padding:12px;font:inherit;font-size:16px;font-weight:400}.cp-req{color:#b23b2e}
-.cp-btn{background:var(--gold);color:#fff;border:0;border-radius:0;padding:13px 22px;font:inherit;font-size:12px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;cursor:pointer}.cp-btn:after{content:" \\2192"}.cp-btn:disabled{opacity:.55;cursor:default}a.cp-btn{display:inline-block;text-decoration:none}
+.cp-btn-quiet{background:#fff;color:var(--gold);border:1px solid var(--gold);border-radius:0;padding:11px 20px;font:inherit;font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;cursor:pointer}.cp-btn{background:var(--gold);color:#fff;border:0;border-radius:0;padding:13px 22px;font:inherit;font-size:12px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;cursor:pointer}.cp-btn:after{content:" \\2192"}.cp-btn:disabled{opacity:.55;cursor:default}a.cp-btn{display:inline-block;text-decoration:none}
 .cp-muted{color:var(--muted);font-size:13px;line-height:1.55}.cp-error{background:#f9eae7;color:#a64f3c;border:1px solid #a64f3c;padding:10px 12px;font-size:13px;margin-bottom:14px}.cp-ok{background:#edf4ed;color:#426b4a;border:1px solid #426b4a;padding:10px 12px;font-size:13px;margin-bottom:14px}
 .cp-big{font-family:Cardo,Georgia,serif;font-size:30px;font-weight:700;line-height:1.1}.cp-bar{height:8px;background:#f1e9dc;overflow:hidden;margin:14px 0}.cp-bar span{display:block;height:100%;background:#6b8c6c}
 .cp-next{display:flex;gap:10px;align-items:center;background:#f4eee3;padding:12px 14px;font-size:14px;margin-bottom:14px}.cp-next svg{flex:none;color:var(--gold)}
@@ -49,6 +50,52 @@ const Icon = ({ name, size = 22 }) => <svg width={size} height={size} viewBox="0
 const Pill = ({ ok, yes, no }) => <span className={'cp-pill' + (ok ? ' ok' : '')}>{ok && <Icon name="check" size={13} />}{ok ? yes : no}</span>;
 
 // Collapsible card. Content stays mounted (so typed answers survive closing); tiles can open it by id.
+// The rental agreement: status for each signer, and signing right here (same emailed-code verification as the email link).
+function AgreementCard({ api, code, name, baseUrl, apiKey }) {
+  const dateOf = ts => new Date(ts).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+  const [state, setState] = React.useState(undefined); // undefined = loading, null = no agreement yet
+  const [token, setToken] = React.useState('');
+  const [busy, setBusy] = React.useState('');
+  const [err, setErr] = React.useState('');
+  const agreementApi = React.useMemo(() => createAgreementApi({ baseUrl, apiKey }), [baseUrl, apiKey]);
+  const load = React.useCallback(() => api('agreement_status', { code, name }).then(o => setState(o.agreement)).catch(() => setState(null)), [api, code, name]);
+  React.useEffect(() => { load(); }, [load]);
+  async function open(signerId) {
+    setErr(''); setBusy(signerId);
+    try { const o = await api('agreement_link', { code, name, signer_id: signerId }); setToken(o.token); }
+    catch (e) { setErr(e.message || 'Could not open the agreement. Please try again.'); }
+    setBusy('');
+  }
+  function close() { setToken(''); load(); }
+  if (state === undefined) return null;
+  const clients = state ? state.signers.filter(s => s.role === 'client') : [];
+  const venue = state ? state.signers.filter(s => s.role === 'venue') : [];
+  const mine = clients.filter(s => s.status !== 'signed');
+  const allSigned = state && state.status === 'completed';
+  const pill = !state ? <Pill ok={false} yes="" no="Coming soon" /> : allSigned ? <Pill ok={true} yes="Fully signed" no="" /> : mine.length ? <Pill ok={false} yes="" no="Needs your signature" /> : <Pill ok={false} yes="" no="Waiting for the venue" />;
+  return <>
+    <Acc id="cp-agreement" icon="doc" title="Rental agreement" pill={pill} defaultOpen={!!state && !allSigned}>
+      {!state && <p className="cp-muted" style={{ marginTop: 0 }}>Your rental agreement isn't ready yet. We'll email you as soon as it's available, and you'll be able to sign it right here.</p>}
+      {state && <>
+        <p className="cp-muted" style={{ marginTop: 0 }}>{allSigned ? 'Everyone has signed. You can open your agreement any time to review it or download a copy.' : 'Each person on the agreement signs for themselves. You will initial each numbered term and confirm with a code we email you. We countersign after every client has signed.'}</p>
+        {clients.map(s => <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', margin: '10px 0' }}>
+          <span style={{ flex: 1, minWidth: 140 }}><strong>{s.name}</strong><br /><span className="cp-muted">{s.status === 'signed' ? 'Signed ' + dateOf(s.signed_at) : 'Not signed yet'}</span></span>
+          <button type="button" className={s.status === 'signed' ? 'cp-btn-quiet' : 'cp-btn'} disabled={!!busy} onClick={() => open(s.id)}>{busy === s.id ? 'Opening…' : s.status === 'signed' ? 'View my copy' : 'Review & sign'}</button>
+        </div>)}
+        {venue.map(s => <p key={s.id} className="cp-muted" style={{ margin: '10px 0 0' }}>North Star House countersignature: {s.status === 'signed' ? 'signed ' + dateOf(s.signed_at) : clients.every(c => c.status === 'signed') ? 'in progress' : 'after all clients have signed'}</p>)}
+      </>}
+      {err && <div className="cp-error" role="alert" style={{ marginTop: 10 }}>{err}</div>}
+    </Acc>
+    {token && <div style={{ position: 'fixed', inset: 0, background: '#fbf8f2', zIndex: 1000, overflow: 'auto' }}>
+      <div style={{ position: 'sticky', top: 0, background: '#fffdfa', borderBottom: '1px solid #cfc2aa', padding: '10px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 2 }}>
+        <span style={{ letterSpacing: '.2em', fontSize: 11, color: '#886c44', fontWeight: 700 }}>NORTH STAR HOUSE</span>
+        <button type="button" className="cp-btn-quiet" onClick={close}>Back to my event page</button>
+      </div>
+      <AgreementSigningPage api={agreementApi} token={token} />
+    </div>}
+  </>;
+}
+
 function Acc({ id, title, icon, pill, defaultOpen, children }) {
   const [open, setOpen] = React.useState(!!defaultOpen);
   React.useEffect(() => {
@@ -184,7 +231,7 @@ function MessageTeam({ api, code, name }) {
   </form>;
 }
 
-export function ClientPayPage({ api }) {
+export function ClientPayPage({ api, baseUrl, apiKey }) {
   const [code, setCode] = React.useState(''), [name, setName] = React.useState(''), [needsName, setNeedsName] = React.useState(false);
   const [data, setData] = React.useState(null), [error, setError] = React.useState(''), [busy, setBusy] = React.useState(false);
   const [amount, setAmount] = React.useState(''), [receipt, setReceipt] = React.useState(null), [insNote, setInsNote] = React.useState('');
@@ -282,6 +329,7 @@ export function ClientPayPage({ api }) {
       </div>
       <div className="cp-cols">
         <div className="cp-col">
+          <AgreementCard api={api} code={code} name={name} baseUrl={baseUrl} apiKey={apiKey} />
           <div className="cp-card" id="cp-payments">
             <h2><span className="cp-hico"><Icon name="card" size={16} /></span>Payments</h2>
             {data.has_schedule && <><div className="cp-big">{money(data.balance_cents)} <span className="cp-muted" style={{ fontFamily: 'system-ui,sans-serif', fontWeight: 400 }}>remaining of {money(data.total_cents)}</span></div>
