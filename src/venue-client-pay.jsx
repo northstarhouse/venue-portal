@@ -407,7 +407,7 @@ export function ClientPayPage({ api, baseUrl, apiKey }) {
             {data.paypal_client_id ? <>
               <label className="cp-field">Amount (USD)<input value={amount} inputMode="decimal" onChange={e => setAmount(e.target.value.replace(/[^0-9.]/g, ''))} /></label>
               <div ref={ppRef} />
-            </> : <p className="cp-muted" style={{ margin: 0 }}>{data.schedule_readonly ? 'Questions about a payment? Use "Message our team" above and we will help.' : 'Online payments are not available yet. Please contact us to arrange payment.'}</p>}
+            </> : <p className="cp-muted" style={{ margin: 0 }}>Online payments are not available yet. Please contact us to arrange payment.</p>}
           </div>
           <Acc id="cp-insurance" icon="shield" title="Certificate of insurance" pill={<Pill ok={data.insurance_uploaded} yes="Received" no="Needed" />} defaultOpen={!data.insurance_uploaded}>
             <p className="cp-muted" style={{ marginTop: 0 }}>Event insurance is required and due one month before your wedding.</p>
