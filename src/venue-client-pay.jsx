@@ -400,13 +400,14 @@ export function ClientPayPage({ api, baseUrl, apiKey }) {
             <h2><span className="cp-hico"><Icon name="card" size={16} /></span>Payments</h2>
             {data.has_schedule && <><div className="cp-big">{money(data.balance_cents)} <span className="cp-muted" style={{ fontFamily: 'system-ui,sans-serif', fontWeight: 400 }}>remaining of {money(data.total_cents)}</span></div>
               <div className="cp-bar"><span style={{ width: pct + '%' }} /></div>
+              {Array.isArray(data.schedule) && data.schedule.length > 0 && <div style={{ margin: '4px 0 10px' }}>{data.schedule.map((p, i) => <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'space-between', padding: '7px 0', borderTop: i ? '1px solid #efe7d8' : 'none', fontSize: 13 }}><span><strong>{p.label}</strong><br /><span className="cp-muted">{p.due_date ? fmt(p.due_date, { month: 'long', day: 'numeric', year: 'numeric' }) : ''}</span></span><span style={{ textAlign: 'right' }}>{money(p.amount_cents)}<br /><span className={'cp-pill' + (p.paid ? ' ok' : '')} style={{ fontSize: 11, padding: '1px 9px' }}>{p.paid ? 'Paid' : 'Due'}</span></span></div>)}</div>}
               {data.next_due && <div className="cp-next"><Icon name="calendar" size={18} /><span>Next: {data.next_due.label} — {money(data.next_due.amount_cents)}{data.next_due.due_date ? ' due ' + fmt(data.next_due.due_date, { month: 'short', day: 'numeric', year: 'numeric' }) : ''}</span></div>}</>}
             {receipt && <div className="cp-ok" role="status">Payment of {money(receipt.paid_cents)} received and added to your booking. PayPal receipt: {receipt.receipt_id}</div>}
             {payError && <div className="cp-error" role="alert">{payError}</div>}
             {data.paypal_client_id ? <>
               <label className="cp-field">Amount (USD)<input value={amount} inputMode="decimal" onChange={e => setAmount(e.target.value.replace(/[^0-9.]/g, ''))} /></label>
               <div ref={ppRef} />
-            </> : <p className="cp-muted" style={{ margin: 0 }}>Online payments are not available yet. Please contact us to arrange payment.</p>}
+            </> : <p className="cp-muted" style={{ margin: 0 }}>{data.schedule_readonly ? 'Questions about a payment? Use "Message our team" above and we will help.' : 'Online payments are not available yet. Please contact us to arrange payment.'}</p>}
           </div>
           <Acc id="cp-insurance" icon="shield" title="Certificate of insurance" pill={<Pill ok={data.insurance_uploaded} yes="Received" no="Needed" />} defaultOpen={!data.insurance_uploaded}>
             <p className="cp-muted" style={{ marginTop: 0 }}>Event insurance is required and due one month before your wedding.</p>
