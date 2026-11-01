@@ -208,6 +208,9 @@ function Questionnaire({ api, code, name, onSaved }) {
   </form>;
 }
 
+// Only weddings include an engraved brick (not private events, nonprofits or memorials).
+const isWeddingEvent = d => /wedding/i.test(String((d && d.event_type) || '') + ' ' + String((d && d.name) || ''));
+
 function Brick({ api, code, name, initial, done, onSaved }) {
   const [lines, setLines] = React.useState(() => [0, 1, 2].map(i => (initial && initial[i]) || '')), [err, setErr] = React.useState(''), [busy, setBusy] = React.useState(false), [saved, setSaved] = React.useState(false);
   const set = (i, v) => { setSaved(false); setLines(ls => ls.map((l, j) => (j === i ? v.slice(0, 20) : l))); };
@@ -390,7 +393,7 @@ export function ClientPayPage({ api, baseUrl, apiKey }) {
         {tile('cp-payments', 'coins', 'Balance', data.has_schedule ? money(data.balance_cents) : '—', data.has_schedule ? 'of ' + money(data.total_cents) : 'No schedule yet', data.has_schedule ? data.balance_cents === 0 : null)}
         {tile('cp-insurance', 'shield', 'Insurance', data.insurance_uploaded ? '' : 'To do', 'Certificate of insurance', data.insurance_uploaded)}
         {tile('cp-questionnaire', 'clipboard', 'Questionnaire', data.questionnaire_done ? '' : 'To do', 'Wedding day details', data.questionnaire_done)}
-        {tile('cp-brick', 'doc', 'Legacy brick', data.brick_done ? '' : 'To do', '3 lines, 20 characters', data.brick_done)}
+        {isWeddingEvent(data) && tile('cp-brick', 'doc', 'Legacy brick', data.brick_done ? '' : 'To do', '3 lines, 20 characters', data.brick_done)}
         {tile('cp-walkthrough', 'walk', 'Walk-through', data.walkthrough ? '' : 'Optional', data.walkthrough ? 'Scheduled ' + fmtWalk(data.walkthrough, { month: 'short', day: 'numeric' }) + ', ' + fmtWalk(data.walkthrough, { hour: 'numeric', minute: '2-digit' }) : 'Second visit to the estate', data.walkthrough ? true : null)}
       </div>
       <div className="cp-cols">
@@ -419,9 +422,9 @@ export function ClientPayPage({ api, baseUrl, apiKey }) {
           </Acc>
         </div>
         <div className="cp-col">
-          <Acc id="cp-brick" icon="brick" title="Your legacy brick" pill={<Pill ok={data.brick_done} yes="Submitted" no="Needed" />} defaultOpen={!data.brick_done}>
+          {isWeddingEvent(data) && <Acc id="cp-brick" icon="brick" title="Your legacy brick" pill={<Pill ok={data.brick_done} yes="Submitted" no="Needed" />} defaultOpen={!data.brick_done}>
             <Brick api={api} code={code} name={name} initial={data.brick_lines} done={data.brick_done} onSaved={lines => setData(d => ({ ...d, brick_lines: lines, brick_done: true }))} />
-          </Acc>
+          </Acc>}
           <Acc id="cp-message" icon="chat" title="Message our team">
             <MessageTeam api={api} code={code} name={name} />
           </Acc>
