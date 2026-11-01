@@ -1,6 +1,8 @@
 // Client event page for venue.northstarhouse.org: venue code -> dashboard. No staff features live here.
 import { ClientPayPage, createClientPayApi } from './venue-client-pay.jsx';
 import { AgreementSigningPage, createAgreementApi } from './venue-contracts.jsx';
+import { installDateFormatter } from './date-format.js';
+installDateFormatter();
 
 const SUPABASE_URL = 'https://uvzwhhwzelaelfhfkvdb.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_EbFMfEbyEp3gASl-GZm3tQ_LnPEe5do'; // publishable (public) key
