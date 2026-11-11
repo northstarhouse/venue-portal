@@ -269,6 +269,44 @@ function WalkThrough({ api, code, name, booked, onBooked }) {
   </>;
 }
 
+// Wedding rehearsal offer (sent 3 months before the wedding when the day before is free). Adding it rechecks the date,
+// shows the details and asks the couple to confirm the charge before anything changes on their invoice.
+function Rehearsal({ api, code, name, rehearsal, onAdded }) {
+  const [details, setDetails] = React.useState(null), [agree, setAgree] = React.useState(false), [busy, setBusy] = React.useState(''), [err, setErr] = React.useState('');
+  if (rehearsal.status === 'confirmed') return <div className="cp-ok" role="status">Your rehearsal is booked for {rehearsal.date_label}{rehearsal.duration ? ' (' + rehearsal.duration + ')' : ''}. It has been added to your payments.</div>;
+  async function check() {
+    setBusy('check'); setErr('');
+    try { const r = await api('rehearsal_check', { code, name }); setDetails(r.rehearsal); }
+    catch (e) { setErr(e.message); }
+    finally { setBusy(''); }
+  }
+  async function confirm() {
+    if (!agree || busy) return;
+    setBusy('confirm'); setErr('');
+    try { const r = await api('rehearsal_confirm', { code, name, agree: true }); onAdded(r); }
+    catch (e) { setErr(e.message); setDetails(null); }
+    finally { setBusy(''); }
+  }
+  return <>
+    <p className="cp-muted" style={{ marginTop: 0 }}>The day before your wedding, <strong>{rehearsal.date_label}</strong>, is currently available for a rehearsal: extra time to walk through your ceremony, set up tables and chairs, or host a rehearsal dinner.</p>
+    {err && <div className="cp-error" role="alert">{err}</div>}
+    {!details && <button type="button" className="cp-btn" disabled={!!busy} onClick={check}>{busy === 'check' ? 'Checking the date…' : 'Add Rehearsal to My Wedding'}</button>}
+    {details && <div style={{ border: '1px solid #e5ddcf', borderRadius: 10, padding: '14px 16px', margin: '4px 0 10px', background: '#fdfbf7' }}>
+      <div style={{ fontSize: 14, lineHeight: 1.8 }}>
+        <div>Date: <strong>{details.date_label}</strong></div>
+        {details.duration && <div>Rental duration: <strong>{details.duration}</strong></div>}
+        <div>Cost: <strong>{money(details.price_cents)}</strong></div>
+      </div>
+      {details.terms && <p className="cp-muted" style={{ whiteSpace: 'pre-wrap', margin: '10px 0 0' }}>{details.terms}</p>}
+      <label className="cp-check" style={{ marginTop: 12 }}><input type="checkbox" checked={agree} onChange={e => setAgree(e.target.checked)} /> I'd like to add this rehearsal, and I agree to {money(details.price_cents)} being added to my wedding invoice.</label>
+      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 10 }}>
+        <button type="button" className="cp-btn" disabled={!agree || !!busy} onClick={confirm}>{busy === 'confirm' ? 'Adding…' : 'Confirm and add ' + money(details.price_cents)}</button>
+        <button type="button" className="cp-btn-quiet" disabled={!!busy} onClick={() => { setDetails(null); setAgree(false); }}>Not now</button>
+      </div>
+    </div>}
+  </>;
+}
+
 function MessageTeam({ api, code, name }) {
   const [people, setPeople] = React.useState(null), [pick, setPick] = React.useState(0), [via, setVia] = React.useState('email'), [text, setText] = React.useState('');
   const [err, setErr] = React.useState(''), [busy, setBusy] = React.useState(false), [ok, setOk] = React.useState(false);
@@ -417,6 +455,9 @@ export function ClientPayPage({ api, baseUrl, apiKey }) {
             {data.insurance_uploaded && <div className="cp-ok" role="status">{insNote || 'We have your insurance on file. You can upload a replacement below.'}</div>}
             <label className="cp-field">Upload a PDF, JPG or PNG (up to 8 MB)<input type="file" accept="application/pdf,image/jpeg,image/png" disabled={busy} onChange={e => { uploadInsurance(e.target.files[0]); e.target.value = ''; }} /></label>
           </Acc>
+          {data.rehearsal && isWeddingEvent(data) && <Acc id="cp-rehearsal" icon="calendar" title="Wedding rehearsal" pill={<Pill ok={data.rehearsal.status === 'confirmed'} yes="Added" no="Available" />} defaultOpen={data.rehearsal.status !== 'confirmed'}>
+            <Rehearsal api={api} code={code} name={name} rehearsal={data.rehearsal} onAdded={r => setData(d => ({ ...d, ...r, rehearsal: r.rehearsal || d.rehearsal }))} />
+          </Acc>}
           <Acc id="cp-walkthrough" icon="walk" title="Second walk-through" pill={<Pill ok={!!data.walkthrough} yes="Scheduled" no="Optional" />}>
             <WalkThrough api={api} code={code} name={name} booked={data.walkthrough} onBooked={w => setData(d => ({ ...d, walkthrough: w }))} />
           </Acc>
