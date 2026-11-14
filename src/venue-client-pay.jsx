@@ -410,7 +410,7 @@ export function ClientPayPage({ api, baseUrl, apiKey }) {
         <h2>Enter your venue code</h2>
         <p className="cp-muted">Your venue code is your event date, written like <strong>DEC-28-2026</strong>. Anyone paying on your behalf can use the same code, and the payment will be added to your booking.</p>
         <label className="cp-field">Venue code<input value={code} onChange={e => setCode(formatVenueCode(e.target.value, e.target.value.length >= code.length))} placeholder="DEC-28-2026" autoComplete="off" autoCapitalize="characters" spellCheck={false} /></label>
-        {needsName && <label className="cp-field">Last name on the booking<input value={name} onChange={e => setName(e.target.value)} autoComplete="off" /></label>}
+        {needsName && <label className="cp-field">Your last name or event name<input value={name} placeholder="e.g. Smith, or Spring Party" onChange={e => setName(e.target.value)} autoComplete="off" /></label>}
         <button className="cp-btn" disabled={busy || !code.trim()}>{busy ? 'Checking…' : 'Continue'}</button>
       </form>
     </> : gate ? <AgreementGate api={api} code={code} name={name} baseUrl={baseUrl} apiKey={apiKey} agreement={gate} eventName={data.name} onUnlock={() => setGate(null)} /> : <>
