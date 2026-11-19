@@ -39,11 +39,12 @@ const style = `.cp-page{overflow-x:hidden;--gold:#886c44;--ink:#2c2418;--muted:#
 .cp-nbig{font-family:Cardo,Georgia,serif;font-size:30px;line-height:1.15;margin:14px 0 4px}.cp-nbig small{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;font-size:13px;color:var(--muted);margin-left:10px}
 .cp-nactions{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-top:auto;padding-top:14px}.cp-ncard .cp-nactions{border-top:1px solid #efe7d8;margin-top:16px}
 .cp-link{background:none;border:0;padding:0;font:inherit;font-size:13px;font-weight:600;color:var(--ink);cursor:pointer}.cp-link:hover{color:var(--gold)}
+.cp-payform{margin-top:14px;padding-top:14px;border-top:1px solid #efe7d8}
 .cp-pill.late{background:#f9e3dc;color:#a64f3c}
 .cp-rows{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start;position:relative;z-index:1}
 .cp-rows>.cp-card{margin:0;padding:14px 18px;border-radius:10px}.cp-rows>.cp-card.open{grid-column:1/-1;padding:18px 22px}
 .cp-rows .cp-acc-head .cp-h{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;font-size:14px;font-weight:700;letter-spacing:0;text-transform:none}
-.cp-headbtns{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}.cp-headbtns .cp-msgbtn{margin-top:0;text-decoration:none}
+.cp-msgbtn{border-radius:999px}.cp-headbtns{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}.cp-headbtns .cp-msgbtn{margin-top:0;text-decoration:none}
 .cp-rows .cp-acc-head .cp-grow{display:flex;justify-content:flex-end}.cp-rows .cp-acc-head .cp-pill{width:150px;box-sizing:border-box;justify-content:center}.cp-rows .cp-hico{border-radius:7px}
 .cp-rows .cp-acc-body{margin-top:14px;padding-top:14px;border-top:1px solid #efe7d8}
 @media(max-width:820px){.cp-next-grid,.cp-rows{grid-template-columns:1fr}.cp-section{font-size:22px}}
@@ -406,6 +407,7 @@ export function ClientPayPage({ api, baseUrl, apiKey }) {
   const [amount, setAmount] = React.useState(''), [receipt, setReceipt] = React.useState(null), [insNote, setInsNote] = React.useState('');
   const [payError, setPayError] = React.useState('');
   const [gate, setGate] = React.useState(null);
+  const [payOpen, setPayOpen] = React.useState(false); // the pay form opens in place, inside the Next payment card
   const ppRef = React.useRef(null), live = React.useRef({});
   live.current = { code, name, amount };
 
@@ -421,7 +423,7 @@ export function ClientPayPage({ api, baseUrl, apiKey }) {
   }
 
   React.useEffect(() => {
-    if (!data || !data.paypal_client_id || !ppRef.current) return;
+    if (!payOpen || !data || !data.paypal_client_id || !ppRef.current) return;
     let cancelled = false; ppRef.current.innerHTML = '';
     loadPayPal(data.paypal_client_id).then(pp => {
       if (cancelled || !ppRef.current) return;
@@ -436,14 +438,14 @@ export function ClientPayPage({ api, baseUrl, apiKey }) {
         onApprove: async d => {
           try {
             const r = await api('capture_order', { code: live.current.code, name: live.current.name, order_id: d.orderID });
-            setReceipt(r); setData(prev => ({ ...prev, ...r }));
+            setReceipt(r); setData(prev => ({ ...prev, ...r })); setPayOpen(false);
           } catch (err) { setPayError(err.message); }
         },
         onError: err => setPayError(err && err.message ? err.message : 'The payment could not be completed.'),
       }).render(ppRef.current);
     }).catch(err => setPayError(err.message));
     return () => { cancelled = true; };
-  }, [data && data.paypal_client_id, !!data, !!gate]);
+  }, [data && data.paypal_client_id, !!data, !!gate, payOpen]);
 
   async function uploadInsurance(file) {
     if (!file) return; setInsNote(''); setError('');
@@ -501,15 +503,22 @@ export function ClientPayPage({ api, baseUrl, apiKey }) {
         return <>
           <h2 className="cp-section">Up next</h2>
           <div className="cp-next-grid">
-            <div className="cp-ncard">
+            <div className="cp-ncard" id="cp-paycard">
               <div className="cp-ncard-top"><span className="cp-sq"><Icon name="card" size={17} /></span><b>{paidUp ? 'Payments' : 'Next payment'}</b><span className="cp-grow" />{paidUp ? <Pill ok yes="Paid in full" /> : nd ? <span className={'cp-pill' + (late ? ' late' : '')}>{late ? 'Past due' : 'Upcoming'}</span> : null}</div>
               {!data.has_schedule ? <p className="cp-muted" style={{ margin: '12px 0 0' }}>Your payment schedule isn't ready yet. We'll let you know when it is.</p>
                 : paidUp ? <div className="cp-nbig">{money(data.total_cents)}<small>paid in full. Thank you!</small></div>
                 : nd ? <><div className="cp-nbig">{money(nd.amount_cents)}<small>{nd.label}</small></div>
                   <div className="cp-muted">{nd.due_date ? 'Due ' + longDay(nd.due_date) + ' · ' : ''}{money(data.balance_cents)} total remaining</div></> : null}
-              <div className="cp-nactions">
-                {data.has_schedule && !paidUp && data.paypal_client_id && <button type="button" className="cp-btn" onClick={() => { if (nd) setAmount((nd.amount_cents / 100).toFixed(2)); go('cp-payments'); }}>Pay {nd ? money(nd.amount_cents) : 'now'}</button>}
-              </div>
+              {data.has_schedule && !paidUp && data.paypal_client_id && !payOpen && <div className="cp-nactions">
+                {<button type="button" className="cp-btn" onClick={() => { if (nd) setAmount((nd.amount_cents / 100).toFixed(2)); setPayOpen(true); }}>Pay {nd ? money(nd.amount_cents) : 'now'}</button>}
+              </div>}
+              {receipt && <div className="cp-ok" role="status" style={{ marginTop: 12 }}>Payment of {money(receipt.paid_cents)} received and added to your booking. PayPal receipt: {receipt.receipt_id}</div>}
+              {payOpen && <div className="cp-payform">
+                {payError && <div className="cp-error" role="alert">{payError}</div>}
+                <label className="cp-field">Amount (USD)<input value={amount} inputMode="decimal" onChange={e => setAmount(e.target.value.replace(/[^0-9.]/g, ''))} /></label>
+                <div ref={ppRef} />
+                <button type="button" className="cp-link" style={{ marginTop: 8 }} onClick={() => { setPayOpen(false); setPayError(''); }}>Cancel</button>
+              </div>}
             </div>
             <div className="cp-ncard">
               <div className="cp-ncard-top"><span className="cp-sq"><Icon name="walk" size={17} /></span><b>Second walk-through</b><span className="cp-grow" /><Pill ok={!!data.walkthrough} yes="Scheduled" no="Optional" /></div>
@@ -530,12 +539,8 @@ export function ClientPayPage({ api, baseUrl, apiKey }) {
               {data.has_schedule && <><div className="cp-big">{money(data.balance_cents)} <span className="cp-muted" style={{ fontFamily: 'system-ui,sans-serif', fontWeight: 400 }}>remaining of {money(data.total_cents)}</span></div>
                 <div className="cp-bar"><span style={{ width: pct + '%' }} /></div>
                 {Array.isArray(data.schedule) && data.schedule.length > 0 && <div style={{ margin: '4px 0 10px' }}>{data.schedule.slice().sort((a, b) => String(a.due_date || '9999').localeCompare(String(b.due_date || '9999'))).map((p, i) => <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'space-between', padding: '7px 0', borderTop: i ? '1px solid #efe7d8' : 'none', fontSize: 13 }}><span><strong>{p.label}</strong><br /><span className="cp-muted">{p.due_date ? longDay(p.due_date) : ''}</span></span><span style={{ textAlign: 'right' }}>{money(p.amount_cents)}<br /><span className={'cp-pill' + (p.paid ? ' ok' : '')} style={{ fontSize: 11, padding: '1px 9px' }}>{p.paid ? 'Paid' : (p.due_date && String(p.due_date).slice(0, 10) > todayKey ? 'Upcoming' : 'Due')}</span></span></div>)}</div>}</>}
-              {receipt && <div className="cp-ok" role="status">Payment of {money(receipt.paid_cents)} received and added to your booking. PayPal receipt: {receipt.receipt_id}</div>}
-              {payError && <div className="cp-error" role="alert">{payError}</div>}
-              {data.paypal_client_id ? <>
-                <label className="cp-field">Amount (USD)<input value={amount} inputMode="decimal" onChange={e => setAmount(e.target.value.replace(/[^0-9.]/g, ''))} /></label>
-                <div ref={ppRef} />
-              </> : <p className="cp-muted" style={{ margin: 0 }}>Online payments are not available yet. Please contact us to arrange payment.</p>}
+              {data.paypal_client_id ? (!paidUp && <button type="button" className="cp-btn" onClick={() => { if (nd) setAmount((nd.amount_cents / 100).toFixed(2)); setPayOpen(true); setTimeout(() => { const el = document.getElementById('cp-paycard'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 30); }}>Make a payment</button>)
+                : <p className="cp-muted" style={{ margin: 0 }}>Online payments are not available yet. Please contact us to arrange payment.</p>}
             </Acc>
             <Acc id="cp-insurance" icon="shield" title="Certificate of insurance" pill={<Pill ok={data.insurance_uploaded} yes="Received" no="Needed" />}>
               <p className="cp-muted" style={{ marginTop: 0 }}>Event insurance is required and due one month before your wedding.</p>
