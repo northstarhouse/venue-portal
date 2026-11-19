@@ -30,7 +30,23 @@ const style = `.cp-page{overflow-x:hidden;--gold:#886c44;--ink:#2c2418;--muted:#
 .cp-qcols{column-count:2;column-gap:44px;margin-bottom:22px}.cp-qsec-wrap{break-inside:avoid-column;margin-bottom:30px}.cp-qcols .cp-sec{margin-top:0}@media(max-width:820px){.cp-qcols{column-count:1}}
 .cp-sec{font-family:Cardo,Georgia,serif;font-weight:700;font-size:19px;color:var(--gold);text-align:center;margin:30px 0 18px;padding:12px 8px;border-top:1px solid var(--gold);border-bottom:1px solid var(--gold)}.cp-lab{display:block;font-weight:400;font-size:15px;line-height:1.45}.cp-note{display:block;font-style:italic;font-weight:400;color:var(--muted);font-size:13px;margin-top:2px}.cp-fieldimg{display:block;width:100%;height:auto;margin:0 0 16px;border:1px solid var(--line)}.cp-field input::placeholder,.cp-field textarea::placeholder{color:#9a9488;font-size:15px;font-weight:400}
 @media(max-width:1100px){.cp-tiles{grid-template-columns:repeat(3,minmax(0,1fr))}}
-@media(max-width:820px){.cp-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}.cp-tile{gap:10px;padding:12px}.cp-ico{width:38px;height:38px}.cp-chev{display:none}.cp-cols{grid-template-columns:1fr}.cp-head{flex-direction:column;min-height:0;padding-top:96px}.cp-head-img{top:-28px;left:-16px;right:-16px;bottom:auto;height:150px;width:auto;opacity:.6;-webkit-mask-image:linear-gradient(to bottom,#000 40%,transparent 100%);mask-image:linear-gradient(to bottom,#000 40%,transparent 100%)}.cp-head-main{max-width:100%}.cp-head-side{width:100%;flex-direction:row;align-items:center;justify-content:flex-start}}`;
+@media(max-width:820px){.cp-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}.cp-tile{gap:10px;padding:12px}.cp-ico{width:38px;height:38px}.cp-chev{display:none}.cp-cols{grid-template-columns:1fr}.cp-head{flex-direction:column;min-height:0;padding-top:96px}.cp-head-img{top:-28px;left:-16px;right:-16px;bottom:auto;height:150px;width:auto;opacity:.6;-webkit-mask-image:linear-gradient(to bottom,#000 40%,transparent 100%);mask-image:linear-gradient(to bottom,#000 40%,transparent 100%)}.cp-head-main{max-width:100%}.cp-head-side{width:100%;flex-direction:row;align-items:center;justify-content:flex-start}}
+.cp-section{font-family:Cardo,Georgia,serif;font-weight:400;font-size:26px;color:var(--ink);margin:26px 0 12px;position:relative;z-index:1}
+.cp-next-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;position:relative;z-index:1}
+.cp-ncard{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:18px 20px;display:flex;flex-direction:column;box-shadow:0 1px 2px rgba(60,45,20,.05)}
+.cp-ncard-top{display:flex;align-items:center;gap:10px;font-size:14px}.cp-ncard-top b{font-weight:700}.cp-grow{flex:1}
+.cp-sq{flex:none;width:30px;height:30px;border-radius:7px;background:#f1e8d8;color:var(--gold);display:inline-flex;align-items:center;justify-content:center}
+.cp-nbig{font-family:Cardo,Georgia,serif;font-size:30px;line-height:1.15;margin:14px 0 4px}.cp-nbig small{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;font-size:13px;color:var(--muted);margin-left:10px}
+.cp-nactions{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-top:auto;padding-top:14px}.cp-ncard .cp-nactions{border-top:1px solid #efe7d8;margin-top:16px}
+.cp-link{background:none;border:0;padding:0;font:inherit;font-size:13px;font-weight:600;color:var(--ink);cursor:pointer}.cp-link:hover{color:var(--gold)}
+.cp-pill.late{background:#f9e3dc;color:#a64f3c}
+.cp-rows{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start;position:relative;z-index:1}
+.cp-rows>.cp-card{margin:0;padding:14px 18px;border-radius:10px}.cp-rows>.cp-card.open{grid-column:1/-1;padding:18px 22px}
+.cp-rows .cp-acc-head .cp-h{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;font-size:14px;font-weight:700;letter-spacing:0;text-transform:none}
+.cp-rows .cp-acc-head .cp-grow{display:flex;justify-content:flex-end}.cp-rows .cp-hico{border-radius:7px}
+.cp-rows .cp-acc-body{margin-top:14px;padding-top:14px;border-top:1px solid #efe7d8}
+@media(max-width:820px){.cp-next-grid,.cp-rows{grid-template-columns:1fr}.cp-section{font-size:22px}}
+`;
 const money = c => (c / 100).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
 
 const ICONS = {
@@ -45,6 +61,7 @@ const ICONS = {
   brick: <><rect x="3" y="5" width="18" height="14" rx="1" /><path d="M3 10h18M3 15h18M9 5v5M15 10v5M9 15v4" /></>,
   chevron: <path d="M9 6l6 6-6 6" />,
   check: <path d="M5 12.5l4.5 4.5L19 7.5" />,
+  clock: <><circle cx="12" cy="12" r="8" /><path d="M12 8v4l3 2" /></>,
 };
 const Icon = ({ name, size = 22 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{ICONS[name]}</svg>;
 const Pill = ({ ok, yes, no }) => <span className={'cp-pill' + (ok ? ' ok' : '')}>{ok && <Icon name="check" size={13} />}{ok ? yes : no}</span>;
@@ -125,7 +142,7 @@ function AgreementCard({ api, code, name, baseUrl, apiKey }) {
   const allSigned = state && (state.status === 'completed' || legacy);
   const pill = !state ? <Pill ok={false} yes="" no="Coming soon" /> : allSigned ? <Pill ok={true} yes="Fully signed" no="" /> : mine.length ? <Pill ok={false} yes="" no="Needs your signature" /> : <Pill ok={false} yes="" no="Waiting for the venue" />;
   return <>
-    <Acc id="cp-agreement" icon="doc" title="Rental agreement" pill={pill} defaultOpen={!!state && !allSigned}>
+    <Acc id="cp-agreement" icon="doc" title="Rental agreement" pill={pill}>
       {!state && <p className="cp-muted" style={{ marginTop: 0 }}>Your rental agreement isn't ready yet. We'll email you as soon as it's available, and you'll be able to sign it right here.</p>}
       {legacy && <p className="cp-muted" style={{ marginTop: 0 }}>Your rental agreement is signed and on file with North Star House.</p>}
       {state && !legacy && <>
@@ -155,7 +172,7 @@ function Acc({ id, title, icon, pill, defaultOpen, children }) {
     const h = e => { if (e.detail === id) setOpen(true); };
     window.addEventListener('cp-open', h); return () => window.removeEventListener('cp-open', h);
   }, [id]);
-  return <div className="cp-card" id={id}>
+  return <div className={"cp-card" + (open ? " open" : "")} id={id}>
     <button type="button" className="cp-acc-head" aria-expanded={open} onClick={() => setOpen(o => !o)}><span className="cp-h">{icon && <span className="cp-hico"><Icon name={icon} size={16} /></span>}{title}</span><span className="cp-grow">{pill}</span><span className="cp-acc-chev"><Icon name="chevron" size={18} /></span></button>
     <div className="cp-acc-body" hidden={!open}>{children}</div>
   </div>;
@@ -445,9 +462,6 @@ export function ClientPayPage({ api, baseUrl, apiKey }) {
     window.dispatchEvent(new CustomEvent('cp-open', { detail: id }));
     setTimeout(() => { const el = document.getElementById(id); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 30);
   };
-  const tile = (id, icon, label, value, sub, ok) => <button type="button" className="cp-tile" onClick={() => go(id)}>
-    <span className="cp-ico"><Icon name={icon} />{ok === true && <span className="cp-tick"><Icon name="check" size={15} /></span>}</span>
-    <span className="cp-txt"><small>{label}</small>{value ? <b>{value}</b> : null}<em>{sub}</em></span></button>;
   return <main className="cp-page"><style>{style}</style><div className={'cp-shell' + (data ? ' wide' : '')}>
     {!data ? <>
       <div className="cp-brandrow">NORTH STAR HOUSE</div>
@@ -474,56 +488,80 @@ export function ClientPayPage({ api, baseUrl, apiKey }) {
         </div>
       </header>
       {error && <div className="cp-error" role="alert">{error}</div>}
-      <div className="cp-tiles">
-        {tile('cp-payments', 'coins', 'Balance', data.has_schedule ? money(data.balance_cents) : '—', data.has_schedule ? 'of ' + money(data.total_cents) : 'No schedule yet', data.has_schedule ? data.balance_cents === 0 : null)}
-        {tile('cp-insurance', 'shield', 'Insurance', data.insurance_uploaded ? '' : 'To do', 'Certificate of insurance', data.insurance_uploaded)}
-        {tile('cp-questionnaire', 'clipboard', 'Questionnaire', data.questionnaire_done ? '' : 'To do', 'Wedding day details', data.questionnaire_done)}
-        {isWeddingEvent(data) && tile('cp-brick', 'doc', 'Legacy brick', data.brick_done ? '' : 'To do', '3 lines, 20 characters', data.brick_done)}
-        {tile('cp-walkthrough', 'walk', 'Walk-through', data.walkthrough ? '' : 'Optional', data.walkthrough ? 'Scheduled ' + fmtWalk(data.walkthrough, { month: 'short', day: 'numeric' }) + ', ' + fmtWalk(data.walkthrough, { hour: 'numeric', minute: '2-digit' }) : 'Second visit to the estate', data.walkthrough ? true : null)}
-      </div>
-      <div className="cp-cols">
-        <div className="cp-col">
-          <AgreementCard api={api} code={code} name={name} baseUrl={baseUrl} apiKey={apiKey} />
-          <div className="cp-card" id="cp-payments">
-            <h2><span className="cp-hico"><Icon name="card" size={16} /></span>Payments</h2>
-            {data.has_schedule && <><div className="cp-big">{money(data.balance_cents)} <span className="cp-muted" style={{ fontFamily: 'system-ui,sans-serif', fontWeight: 400 }}>remaining of {money(data.total_cents)}</span></div>
-              <div className="cp-bar"><span style={{ width: pct + '%' }} /></div>
-              {Array.isArray(data.schedule) && data.schedule.length > 0 && <div style={{ margin: '4px 0 10px' }}>{data.schedule.slice().sort((a, b) => String(a.due_date || '9999').localeCompare(String(b.due_date || '9999'))).map((p, i) => <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'space-between', padding: '7px 0', borderTop: i ? '1px solid #efe7d8' : 'none', fontSize: 13 }}><span><strong>{p.label}</strong><br /><span className="cp-muted">{p.due_date ? fmt(p.due_date, { month: 'long', day: 'numeric', year: 'numeric' }) : ''}</span></span><span style={{ textAlign: 'right' }}>{money(p.amount_cents)}<br /><span className={'cp-pill' + (p.paid ? ' ok' : '')} style={{ fontSize: 11, padding: '1px 9px' }}>{p.paid ? 'Paid' : (p.due_date && String(p.due_date).slice(0, 10) > new Date().toLocaleDateString('en-CA') ? 'Upcoming' : 'Due')}</span></span></div>)}</div>}
-              {data.next_due && <div className="cp-next"><Icon name="calendar" size={18} /><span>Next: {data.next_due.label} — {money(data.next_due.amount_cents)}{data.next_due.due_date ? ' due ' + fmt(data.next_due.due_date, { month: 'short', day: 'numeric', year: 'numeric' }) : ''}</span></div>}</>}
-            {receipt && <div className="cp-ok" role="status">Payment of {money(receipt.paid_cents)} received and added to your booking. PayPal receipt: {receipt.receipt_id}</div>}
-            {payError && <div className="cp-error" role="alert">{payError}</div>}
-            {data.paypal_client_id ? <>
-              <label className="cp-field">Amount (USD)<input value={amount} inputMode="decimal" onChange={e => setAmount(e.target.value.replace(/[^0-9.]/g, ''))} /></label>
-              <div ref={ppRef} />
-            </> : <p className="cp-muted" style={{ margin: 0 }}>Online payments are not available yet. Please contact us to arrange payment.</p>}
+      {(() => {
+        // Simple layout: what needs doing next (payment, walk-through), then one tidy row per wedding detail. Rows open
+        // in place (full width) when tapped; the buttons above jump to and open the matching row.
+        const todayKey = new Date().toLocaleDateString('en-CA');
+        const nd = data.next_due;
+        const late = !!(nd && nd.due_date && String(nd.due_date).slice(0, 10) < todayKey);
+        const paidUp = data.has_schedule && data.balance_cents === 0;
+        const longDay = d => fmt(d, { month: 'long', day: 'numeric', year: 'numeric' });
+        return <>
+          <h2 className="cp-section">Up next</h2>
+          <div className="cp-next-grid">
+            <div className="cp-ncard">
+              <div className="cp-ncard-top"><span className="cp-sq"><Icon name="card" size={17} /></span><b>{paidUp ? 'Payments' : 'Next payment'}</b><span className="cp-grow" />{paidUp ? <Pill ok yes="Paid in full" /> : nd ? <span className={'cp-pill' + (late ? ' late' : '')}>{late ? 'Past due' : 'Upcoming'}</span> : null}</div>
+              {!data.has_schedule ? <p className="cp-muted" style={{ margin: '12px 0 0' }}>Your payment schedule isn't ready yet. We'll let you know when it is.</p>
+                : paidUp ? <div className="cp-nbig">{money(data.total_cents)}<small>paid in full. Thank you!</small></div>
+                : nd ? <><div className="cp-nbig">{money(nd.amount_cents)}<small>{nd.label}</small></div>
+                  <div className="cp-muted">{nd.due_date ? 'Due ' + longDay(nd.due_date) + ' · ' : ''}{money(data.balance_cents)} total remaining</div></> : null}
+              <div className="cp-nactions">
+                {data.has_schedule && !paidUp && data.paypal_client_id && <button type="button" className="cp-btn" onClick={() => { if (nd) setAmount((nd.amount_cents / 100).toFixed(2)); go('cp-payments'); }}>Pay {nd ? money(nd.amount_cents) : 'now'}</button>}
+                {data.has_schedule && <button type="button" className="cp-link" onClick={() => go('cp-payments')}>View payment schedule ›</button>}
+              </div>
+            </div>
+            <div className="cp-ncard">
+              <div className="cp-ncard-top"><span className="cp-sq"><Icon name="walk" size={17} /></span><b>Second walk-through</b><span className="cp-grow" /><Pill ok={!!data.walkthrough} yes="Scheduled" no="Optional" /></div>
+              {data.walkthrough ? <>
+                <div className="cp-nbig">{fmtWalk(data.walkthrough, { weekday: 'long', month: 'long', day: 'numeric' })}</div>
+                <div className="cp-muted">{fmtWalk(data.walkthrough, { hour: 'numeric', minute: '2-digit' })} · North Star House</div>
+                <div className="cp-nactions"><button type="button" className="cp-link" onClick={() => go('cp-message')}>Need to change it? Message us ›</button></div>
+              </> : <>
+                <p className="cp-muted" style={{ margin: '12px 0 0' }}>Want to see the estate again before your day? Pick a time that works for you.</p>
+                <div className="cp-nactions"><button type="button" className="cp-btn-quiet" onClick={() => go('cp-walkthrough')}>Pick a time</button></div>
+              </>}
+            </div>
           </div>
-          <Acc id="cp-insurance" icon="shield" title="Certificate of insurance" pill={<Pill ok={data.insurance_uploaded} yes="Received" no="Needed" />} defaultOpen={!data.insurance_uploaded}>
-            <p className="cp-muted" style={{ marginTop: 0 }}>Event insurance is required and due one month before your wedding.</p>
-            {data.insurance_uploaded && <div className="cp-ok" role="status">{insNote || 'We have your insurance on file. You can upload a replacement below.'}</div>}
-            <label className="cp-field">Upload a PDF, JPG or PNG (up to 8 MB)<input type="file" accept="application/pdf,image/jpeg,image/png" disabled={busy} onChange={e => { uploadInsurance(e.target.files[0]); e.target.value = ''; }} /></label>
-          </Acc>
-          {data.rehearsal && isWeddingEvent(data) && <Acc id="cp-rehearsal" icon="calendar" title="Wedding rehearsal" pill={<Pill ok={data.rehearsal.status === 'confirmed'} yes="Added" no="Available" />} defaultOpen={data.rehearsal.status !== 'confirmed'}>
-            <Rehearsal api={api} code={code} name={name} rehearsal={data.rehearsal} onAdded={r => setData(d => ({ ...d, ...r, rehearsal: r.rehearsal || d.rehearsal }))} />
-          </Acc>}
-          {data.extra_hours && (data.extra_hours.available || data.extra_hours.added > 0) && <Acc id="cp-extra-hours" icon="calendar" title="Add extra hours to your rental day" pill={<Pill ok={data.extra_hours.added > 0} yes={data.extra_hours.added + ' added'} no="Optional" />}>
-            <ExtraHours api={api} code={code} name={name} info={data.extra_hours} onAdded={r => setData(d => ({ ...d, ...r }))} />
-          </Acc>}
-          <Acc id="cp-walkthrough" icon="walk" title="Second walk-through" pill={<Pill ok={!!data.walkthrough} yes="Scheduled" no="Optional" />}>
-            <WalkThrough api={api} code={code} name={name} booked={data.walkthrough} onBooked={w => setData(d => ({ ...d, walkthrough: w }))} />
-          </Acc>
-        </div>
-        <div className="cp-col">
-          {isWeddingEvent(data) && <Acc id="cp-brick" icon="brick" title="Your legacy brick" pill={<Pill ok={data.brick_done} yes="Submitted" no="Needed" />} defaultOpen={!data.brick_done}>
-            <Brick api={api} code={code} name={name} initial={data.brick_lines} done={data.brick_done} onSaved={lines => setData(d => ({ ...d, brick_lines: lines, brick_done: true }))} />
-          </Acc>}
-          <Acc id="cp-message" icon="chat" title="Message our team">
-            <MessageTeam api={api} code={code} name={name} />
-          </Acc>
-        </div>
-      </div>
-      <Acc id="cp-questionnaire" icon="clipboard" title="Event questionnaire" pill={<Pill ok={data.questionnaire_done} yes="Completed" no="To do" />} defaultOpen={!data.questionnaire_done}>
-        <Questionnaire api={api} code={code} name={name} onSaved={() => setData(d => ({ ...d, questionnaire_done: true }))} />
-      </Acc>
+          <h2 className="cp-section">{isWeddingEvent(data) ? 'Wedding details' : 'Event details'}</h2>
+          <div className="cp-rows">
+            <AgreementCard api={api} code={code} name={name} baseUrl={baseUrl} apiKey={apiKey} />
+            <Acc id="cp-payments" icon="card" title="Payments" pill={!data.has_schedule ? null : paidUp ? <Pill ok yes="Paid in full" /> : <span className={'cp-pill' + (late ? ' late' : '')}>{money(data.balance_cents)} left</span>}>
+              {data.has_schedule && <><div className="cp-big">{money(data.balance_cents)} <span className="cp-muted" style={{ fontFamily: 'system-ui,sans-serif', fontWeight: 400 }}>remaining of {money(data.total_cents)}</span></div>
+                <div className="cp-bar"><span style={{ width: pct + '%' }} /></div>
+                {Array.isArray(data.schedule) && data.schedule.length > 0 && <div style={{ margin: '4px 0 10px' }}>{data.schedule.slice().sort((a, b) => String(a.due_date || '9999').localeCompare(String(b.due_date || '9999'))).map((p, i) => <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'space-between', padding: '7px 0', borderTop: i ? '1px solid #efe7d8' : 'none', fontSize: 13 }}><span><strong>{p.label}</strong><br /><span className="cp-muted">{p.due_date ? longDay(p.due_date) : ''}</span></span><span style={{ textAlign: 'right' }}>{money(p.amount_cents)}<br /><span className={'cp-pill' + (p.paid ? ' ok' : '')} style={{ fontSize: 11, padding: '1px 9px' }}>{p.paid ? 'Paid' : (p.due_date && String(p.due_date).slice(0, 10) > todayKey ? 'Upcoming' : 'Due')}</span></span></div>)}</div>}</>}
+              {receipt && <div className="cp-ok" role="status">Payment of {money(receipt.paid_cents)} received and added to your booking. PayPal receipt: {receipt.receipt_id}</div>}
+              {payError && <div className="cp-error" role="alert">{payError}</div>}
+              {data.paypal_client_id ? <>
+                <label className="cp-field">Amount (USD)<input value={amount} inputMode="decimal" onChange={e => setAmount(e.target.value.replace(/[^0-9.]/g, ''))} /></label>
+                <div ref={ppRef} />
+              </> : <p className="cp-muted" style={{ margin: 0 }}>Online payments are not available yet. Please contact us to arrange payment.</p>}
+            </Acc>
+            <Acc id="cp-insurance" icon="shield" title="Certificate of insurance" pill={<Pill ok={data.insurance_uploaded} yes="Received" no="Needed" />}>
+              <p className="cp-muted" style={{ marginTop: 0 }}>Event insurance is required and due one month before your wedding.</p>
+              {data.insurance_uploaded && <div className="cp-ok" role="status">{insNote || 'We have your insurance on file. You can upload a replacement below.'}</div>}
+              <label className="cp-field">Upload a PDF, JPG or PNG (up to 8 MB)<input type="file" accept="application/pdf,image/jpeg,image/png" disabled={busy} onChange={e => { uploadInsurance(e.target.files[0]); e.target.value = ''; }} /></label>
+            </Acc>
+            <Acc id="cp-questionnaire" icon="clipboard" title="Event questionnaire" pill={<Pill ok={data.questionnaire_done} yes="Completed" no="To do" />}>
+              <Questionnaire api={api} code={code} name={name} onSaved={() => setData(d => ({ ...d, questionnaire_done: true }))} />
+            </Acc>
+            {isWeddingEvent(data) && <Acc id="cp-brick" icon="brick" title="Legacy brick" pill={<Pill ok={data.brick_done} yes="Submitted" no="Needed" />}>
+              <Brick api={api} code={code} name={name} initial={data.brick_lines} done={data.brick_done} onSaved={lines => setData(d => ({ ...d, brick_lines: lines, brick_done: true }))} />
+            </Acc>}
+            {data.extra_hours && (data.extra_hours.available || data.extra_hours.added > 0) && <Acc id="cp-extra-hours" icon="clock" title="Extra rental hours" pill={<Pill ok={data.extra_hours.added > 0} yes={data.extra_hours.added + ' added'} no="Optional" />}>
+              <ExtraHours api={api} code={code} name={name} info={data.extra_hours} onAdded={r => setData(d => ({ ...d, ...r }))} />
+            </Acc>}
+            {data.rehearsal && isWeddingEvent(data) && <Acc id="cp-rehearsal" icon="calendar" title="Wedding rehearsal" pill={<Pill ok={data.rehearsal.status === 'confirmed'} yes="Added" no="Available" />}>
+              <Rehearsal api={api} code={code} name={name} rehearsal={data.rehearsal} onAdded={r => setData(d => ({ ...d, ...r, rehearsal: r.rehearsal || d.rehearsal }))} />
+            </Acc>}
+            {!data.walkthrough && <Acc id="cp-walkthrough" icon="walk" title="Second walk-through" pill={<Pill ok={false} yes="" no="Optional" />}>
+              <WalkThrough api={api} code={code} name={name} booked={data.walkthrough} onBooked={w => setData(d => ({ ...d, walkthrough: w }))} />
+            </Acc>}
+            <Acc id="cp-message" icon="chat" title="Message our team">
+              <MessageTeam api={api} code={code} name={name} />
+            </Acc>
+          </div>
+        </>;
+      })()}
     </>}
   </div></main>;
 }
