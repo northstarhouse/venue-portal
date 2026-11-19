@@ -39,6 +39,7 @@ const style = `.cp-page{overflow-x:hidden;--gold:#886c44;--ink:#2c2418;--muted:#
 .cp-nbig{font-family:Cardo,Georgia,serif;font-size:30px;line-height:1.15;margin:14px 0 4px}.cp-nbig small{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;font-size:13px;color:var(--muted);margin-left:10px}
 .cp-nactions{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-top:auto;padding-top:14px}.cp-ncard .cp-nactions{border-top:1px solid #efe7d8;margin-top:16px}
 .cp-link{background:none;border:0;padding:0;font:inherit;font-size:13px;font-weight:600;color:var(--ink);cursor:pointer}.cp-link:hover{color:var(--gold)}
+.cp-paysched{margin:0 0 16px}.cp-paysched-h{font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--gold);margin-bottom:4px}.cp-paysched-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid #efe7d8;font-size:13px}.cp-paysched-row:first-of-type{border-top:0}
 .cp-payform{margin-top:14px;padding-top:14px;border-top:1px solid #efe7d8}
 .cp-pill.late{background:#f9e3dc;color:#a64f3c}
 .cp-rows{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start;position:relative;z-index:1}
@@ -514,6 +515,10 @@ export function ClientPayPage({ api, baseUrl, apiKey }) {
               </div>}
               {receipt && <div className="cp-ok" role="status" style={{ marginTop: 12 }}>Payment of {money(receipt.paid_cents)} received and added to your booking. PayPal receipt: {receipt.receipt_id}</div>}
               {payOpen && <div className="cp-payform">
+                {Array.isArray(data.schedule) && data.schedule.length > 0 && <div className="cp-paysched">
+                  <div className="cp-paysched-h">Payment schedule</div>
+                  {data.schedule.slice().sort((x, y) => String(x.due_date || '9999').localeCompare(String(y.due_date || '9999'))).map((p, i) => <div key={i} className="cp-paysched-row"><span><strong>{p.label}</strong><br /><span className="cp-muted">{p.due_date ? longDay(p.due_date) : ''}</span></span><span style={{ textAlign: 'right' }}>{money(p.amount_cents)}<br /><span className={'cp-pill' + (p.paid ? ' ok' : (p.due_date && String(p.due_date).slice(0, 10) < todayKey ? ' late' : ''))} style={{ fontSize: 11, padding: '1px 9px' }}>{p.paid ? 'Paid' : (p.due_date && String(p.due_date).slice(0, 10) > todayKey ? 'Upcoming' : 'Due')}</span></span></div>)}
+                </div>}
                 {payError && <div className="cp-error" role="alert">{payError}</div>}
                 <label className="cp-field">Amount (USD)<input value={amount} inputMode="decimal" onChange={e => setAmount(e.target.value.replace(/[^0-9.]/g, ''))} /></label>
                 <div ref={ppRef} />
