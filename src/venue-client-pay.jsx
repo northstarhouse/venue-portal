@@ -43,7 +43,8 @@ const style = `.cp-page{overflow-x:hidden;--gold:#886c44;--ink:#2c2418;--muted:#
 .cp-rows{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start;position:relative;z-index:1}
 .cp-rows>.cp-card{margin:0;padding:14px 18px;border-radius:10px}.cp-rows>.cp-card.open{grid-column:1/-1;padding:18px 22px}
 .cp-rows .cp-acc-head .cp-h{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;font-size:14px;font-weight:700;letter-spacing:0;text-transform:none}
-.cp-rows .cp-acc-head .cp-grow{display:flex;justify-content:flex-end}.cp-rows .cp-hico{border-radius:7px}
+.cp-headbtns{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}.cp-headbtns .cp-msgbtn{margin-top:0;text-decoration:none}
+.cp-rows .cp-acc-head .cp-grow{display:flex;justify-content:flex-end}.cp-rows .cp-acc-head .cp-pill{width:150px;box-sizing:border-box;justify-content:center}.cp-rows .cp-hico{border-radius:7px}
 .cp-rows .cp-acc-body{margin-top:14px;padding-top:14px;border-top:1px solid #efe7d8}
 @media(max-width:820px){.cp-next-grid,.cp-rows{grid-template-columns:1fr}.cp-section{font-size:22px}}
 `;
@@ -481,7 +482,8 @@ export function ClientPayPage({ api, baseUrl, apiKey }) {
           <div className="cp-brandrow">NORTH STAR HOUSE</div>
           <h1>{data.name}</h1>
           <div className="cp-sub"><Icon name="calendar" size={16} /><span>{fmt(data.event_date, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</span></div>
-          <button type="button" className="cp-msgbtn" onClick={() => go('cp-message')}><Icon name="chat" size={17} />Message our team</button>
+          <div className="cp-headbtns"><button type="button" className="cp-msgbtn" onClick={() => go('cp-message')}><Icon name="chat" size={17} />Message our team</button>
+            <a className="cp-msgbtn" href="https://venue.northstarhouse.org/guidebook/" target="_blank" rel="noopener noreferrer"><Icon name="doc" size={17} />Client guidebook</a></div>
         </div>
         <div className="cp-head-side">
           <div className="cp-countdown">{daysTo > 0 ? <><strong>{daysTo}</strong><hr /><span>{daysTo === 1 ? 'day to go' : 'days to go'}</span></> : daysTo === 0 ? <strong style={{ fontSize: 24 }}>Today!</strong> : <strong style={{ fontSize: 20 }}>Congratulations</strong>}</div>
@@ -507,7 +509,6 @@ export function ClientPayPage({ api, baseUrl, apiKey }) {
                   <div className="cp-muted">{nd.due_date ? 'Due ' + longDay(nd.due_date) + ' · ' : ''}{money(data.balance_cents)} total remaining</div></> : null}
               <div className="cp-nactions">
                 {data.has_schedule && !paidUp && data.paypal_client_id && <button type="button" className="cp-btn" onClick={() => { if (nd) setAmount((nd.amount_cents / 100).toFixed(2)); go('cp-payments'); }}>Pay {nd ? money(nd.amount_cents) : 'now'}</button>}
-                {data.has_schedule && <button type="button" className="cp-link" onClick={() => go('cp-payments')}>View payment schedule ›</button>}
               </div>
             </div>
             <div className="cp-ncard">
@@ -544,10 +545,10 @@ export function ClientPayPage({ api, baseUrl, apiKey }) {
             <Acc id="cp-questionnaire" icon="clipboard" title="Event questionnaire" pill={<Pill ok={data.questionnaire_done} yes="Completed" no="To do" />}>
               <Questionnaire api={api} code={code} name={name} onSaved={() => setData(d => ({ ...d, questionnaire_done: true }))} />
             </Acc>
-            {isWeddingEvent(data) && <Acc id="cp-brick" icon="brick" title="Legacy brick" pill={<Pill ok={data.brick_done} yes="Submitted" no="Needed" />}>
+            {isWeddingEvent(data) && <Acc id="cp-brick" icon="brick" title="Personalized Brick Wording" pill={<Pill ok={data.brick_done} yes="Submitted" no="Needed" />}>
               <Brick api={api} code={code} name={name} initial={data.brick_lines} done={data.brick_done} onSaved={lines => setData(d => ({ ...d, brick_lines: lines, brick_done: true }))} />
             </Acc>}
-            {data.extra_hours && (data.extra_hours.available || data.extra_hours.added > 0) && <Acc id="cp-extra-hours" icon="clock" title="Extra rental hours" pill={<Pill ok={data.extra_hours.added > 0} yes={data.extra_hours.added + ' added'} no="Optional" />}>
+            {data.extra_hours && (data.extra_hours.available || data.extra_hours.added > 0) && <Acc id="cp-extra-hours" icon="clock" title="Add extra hours" pill={<Pill ok={data.extra_hours.added > 0} yes={data.extra_hours.added + ' added'} no="Optional" />}>
               <ExtraHours api={api} code={code} name={name} info={data.extra_hours} onAdded={r => setData(d => ({ ...d, ...r }))} />
             </Acc>}
             {data.rehearsal && isWeddingEvent(data) && <Acc id="cp-rehearsal" icon="calendar" title="Wedding rehearsal" pill={<Pill ok={data.rehearsal.status === 'confirmed'} yes="Added" no="Available" />}>
