@@ -307,6 +307,53 @@ function Rehearsal({ api, code, name, rehearsal, onAdded }) {
   </>;
 }
 
+// "Add extra hours to your rental day": pick how many hours and the new expected arrival and departure times (all within
+// 10 AM to 11 PM), confirm the charge and the time window, and it is added to the invoice right away.
+const TIME_OPTS = (() => { const out = []; for (let m = 10 * 60; m <= 23 * 60; m += 30) { const h = Math.floor(m / 60), mm = m % 60; out.push({ v: String(h).padStart(2, '0') + ':' + String(mm).padStart(2, '0'), t: (h % 12 || 12) + ':' + String(mm).padStart(2, '0') + (h < 12 ? ' AM' : ' PM') }); } return out; })();
+const tmin = v => { const [h, m] = String(v).split(':').map(Number); return h * 60 + m; };
+function ExtraHours({ api, code, name, info, onAdded }) {
+  const [hours, setHours] = React.useState(1), [start, setStart] = React.useState(''), [end, setEnd] = React.useState('');
+  const [agree, setAgree] = React.useState(false), [understand, setUnderstand] = React.useState(false);
+  const [busy, setBusy] = React.useState(false), [err, setErr] = React.useState(''), [done, setDone] = React.useState(null);
+  const total = info.included + info.added + hours;
+  const cost = hours * info.rate_cents;
+  // Choosing an arrival time fills in the matching departure time (and the other way round).
+  const pickStart = v => { setStart(v); const e = tmin(v) + total * 60; if (v && e <= 23 * 60) setEnd(TIME_OPTS.find(o => tmin(o.v) === e)?.v || ''); };
+  const pickEnd = v => { setEnd(v); const s = tmin(v) - total * 60; if (v && s >= 10 * 60) setStart(TIME_OPTS.find(o => tmin(o.v) === s)?.v || ''); };
+  const span = start && end ? (tmin(end) - tmin(start)) / 60 : null;
+  const timesOk = span === total;
+  async function add() {
+    if (busy || !agree || !understand || !timesOk) return;
+    setBusy(true); setErr('');
+    try { const r = await api('extra_hours_add', { code, name, hours, start, end, agree: true, understand: true }); setDone(r.hours_added); onAdded(r); }
+    catch (e) { setErr(e.message); }
+    finally { setBusy(false); }
+  }
+  if (done) return <div className="cp-ok" role="status">{done.hours} extra hour{done.hours === 1 ? '' : 's'} added. Your expected time on site is now {done.when}, and {money(done.cents)} has been added to your payments.</div>;
+  if (!info.available) return <p className="cp-muted" style={{ margin: 0 }}>{info.added ? 'You have added ' + info.added + ' extra hour' + (info.added === 1 ? '' : 's') + '. ' : ''}{info.max_more <= 0 ? 'Your rental day already uses the full 10 AM to 11 PM window.' : 'To change your hours, please message our venue team.'}</p>;
+  return <>
+    <p className="cp-muted" style={{ marginTop: 0 }}>Your rental includes {info.included} hours on site{info.added ? ', plus the ' + info.added + ' extra hour' + (info.added === 1 ? '' : 's') + ' you already added' : ''}. Extra hours are {money(info.rate_cents)} each. All time on site, including setup and clean-up, has to be between 10:00 AM and 11:00 PM.</p>
+    {err && <div className="cp-error" role="alert">{err}</div>}
+    <label className="cp-field">How many extra hours?
+      <select value={hours} onChange={e => { setHours(Number(e.target.value)); setStart(''); setEnd(''); }}>
+        {Array.from({ length: info.max_more }, (_, i) => i + 1).map(n => <option key={n} value={n}>{n} hour{n === 1 ? '' : 's'} ({money(n * info.rate_cents)})</option>)}
+      </select>
+    </label>
+    <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+      <label className="cp-field" style={{ flex: '1 1 140px' }}>New expected arrival
+        <select value={start} onChange={e => pickStart(e.target.value)}><option value="">Choose a time</option>{TIME_OPTS.filter(o => tmin(o.v) + total * 60 <= 23 * 60).map(o => <option key={o.v} value={o.v}>{o.t}</option>)}</select>
+      </label>
+      <label className="cp-field" style={{ flex: '1 1 140px' }}>New expected departure
+        <select value={end} onChange={e => pickEnd(e.target.value)}><option value="">Choose a time</option>{TIME_OPTS.filter(o => tmin(o.v) - total * 60 >= 10 * 60).map(o => <option key={o.v} value={o.v}>{o.t}</option>)}</select>
+      </label>
+    </div>
+    <p className="cp-muted" style={{ margin: '0 0 8px' }}>Your day will be <strong>{total} hours</strong> on site{start && end ? ', from ' + TIME_OPTS.find(o => o.v === start)?.t + ' to ' + TIME_OPTS.find(o => o.v === end)?.t : ''}.</p>
+    <label className="cp-check"><input type="checkbox" checked={understand} onChange={e => setUnderstand(e.target.checked)} /> I understand that all of our time on site, including setup and clean-up, must be between 10:00 AM and 11:00 PM.</label>
+    <label className="cp-check"><input type="checkbox" checked={agree} onChange={e => setAgree(e.target.checked)} /> I'd like to add {hours} extra hour{hours === 1 ? '' : 's'}, and I agree to {money(cost)} being added to my invoice.</label>
+    <button type="button" className="cp-btn" style={{ marginTop: 10 }} disabled={busy || !agree || !understand || !timesOk} onClick={add}>{busy ? 'Adding…' : 'Add ' + hours + ' hour' + (hours === 1 ? '' : 's') + ' for ' + money(cost)}</button>
+  </>;
+}
+
 function MessageTeam({ api, code, name }) {
   const [people, setPeople] = React.useState(null), [pick, setPick] = React.useState(0), [via, setVia] = React.useState('email'), [text, setText] = React.useState('');
   const [err, setErr] = React.useState(''), [busy, setBusy] = React.useState(false), [ok, setOk] = React.useState(false);
@@ -457,6 +504,9 @@ export function ClientPayPage({ api, baseUrl, apiKey }) {
           </Acc>
           {data.rehearsal && isWeddingEvent(data) && <Acc id="cp-rehearsal" icon="calendar" title="Wedding rehearsal" pill={<Pill ok={data.rehearsal.status === 'confirmed'} yes="Added" no="Available" />} defaultOpen={data.rehearsal.status !== 'confirmed'}>
             <Rehearsal api={api} code={code} name={name} rehearsal={data.rehearsal} onAdded={r => setData(d => ({ ...d, ...r, rehearsal: r.rehearsal || d.rehearsal }))} />
+          </Acc>}
+          {data.extra_hours && (data.extra_hours.available || data.extra_hours.added > 0) && <Acc id="cp-extra-hours" icon="calendar" title="Add extra hours to your rental day" pill={<Pill ok={data.extra_hours.added > 0} yes={data.extra_hours.added + ' added'} no="Optional" />}>
+            <ExtraHours api={api} code={code} name={name} info={data.extra_hours} onAdded={r => setData(d => ({ ...d, ...r }))} />
           </Acc>}
           <Acc id="cp-walkthrough" icon="walk" title="Second walk-through" pill={<Pill ok={!!data.walkthrough} yes="Scheduled" no="Optional" />}>
             <WalkThrough api={api} code={code} name={name} booked={data.walkthrough} onBooked={w => setData(d => ({ ...d, walkthrough: w }))} />
