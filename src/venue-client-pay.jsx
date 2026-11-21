@@ -510,15 +510,15 @@ export function ClientPayPage({ api, baseUrl, apiKey }) {
                 : paidUp ? <div className="cp-nbig">{money(data.total_cents)}<small>paid in full. Thank you!</small></div>
                 : nd ? <><div className="cp-nbig">{money(nd.amount_cents)}<small>{nd.label}</small></div>
                   <div className="cp-muted">{nd.due_date ? 'Due ' + longDay(nd.due_date) + ' · ' : ''}{money(data.balance_cents)} total remaining</div></> : null}
+              {Array.isArray(data.schedule) && data.schedule.length > 0 && <div className="cp-paysched">
+                <div className="cp-paysched-h">Payment schedule</div>
+                {data.schedule.slice().sort((x, y) => String(x.due_date || '9999').localeCompare(String(y.due_date || '9999'))).map((p, i) => <div key={i} className="cp-paysched-row"><span><strong>{p.label}</strong><br /><span className="cp-muted">{p.due_date ? longDay(p.due_date) : ''}</span></span><span style={{ textAlign: 'right' }}>{money(p.amount_cents)}<br /><span className={'cp-pill' + (p.paid ? ' ok' : (p.due_date && String(p.due_date).slice(0, 10) < todayKey ? ' late' : ''))} style={{ fontSize: 11, padding: '1px 9px' }}>{p.paid ? 'Paid' : (p.due_date && String(p.due_date).slice(0, 10) > todayKey ? 'Upcoming' : 'Due')}</span></span></div>)}
+              </div>}
               {data.has_schedule && !paidUp && data.paypal_client_id && !payOpen && <div className="cp-nactions">
                 {<button type="button" className="cp-btn" onClick={() => { if (nd) setAmount((nd.amount_cents / 100).toFixed(2)); setPayOpen(true); }}>Pay {nd ? money(nd.amount_cents) : 'now'}</button>}
               </div>}
               {receipt && <div className="cp-ok" role="status" style={{ marginTop: 12 }}>Payment of {money(receipt.paid_cents)} received and added to your booking. PayPal receipt: {receipt.receipt_id}</div>}
               {payOpen && <div className="cp-payform">
-                {Array.isArray(data.schedule) && data.schedule.length > 0 && <div className="cp-paysched">
-                  <div className="cp-paysched-h">Payment schedule</div>
-                  {data.schedule.slice().sort((x, y) => String(x.due_date || '9999').localeCompare(String(y.due_date || '9999'))).map((p, i) => <div key={i} className="cp-paysched-row"><span><strong>{p.label}</strong><br /><span className="cp-muted">{p.due_date ? longDay(p.due_date) : ''}</span></span><span style={{ textAlign: 'right' }}>{money(p.amount_cents)}<br /><span className={'cp-pill' + (p.paid ? ' ok' : (p.due_date && String(p.due_date).slice(0, 10) < todayKey ? ' late' : ''))} style={{ fontSize: 11, padding: '1px 9px' }}>{p.paid ? 'Paid' : (p.due_date && String(p.due_date).slice(0, 10) > todayKey ? 'Upcoming' : 'Due')}</span></span></div>)}
-                </div>}
                 {payError && <div className="cp-error" role="alert">{payError}</div>}
                 <label className="cp-field">Amount (USD)<input value={amount} inputMode="decimal" onChange={e => setAmount(e.target.value.replace(/[^0-9.]/g, ''))} /></label>
                 <div ref={ppRef} />
