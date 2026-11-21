@@ -534,7 +534,10 @@ export function ClientPayPage({ api, baseUrl, apiKey }) {
                 <button type="button" className="cp-link" style={{ marginTop: 8 }} onClick={() => { setPayOpen(false); setPayError(''); }}>Cancel</button>
               </div>}
             </div>
-            <div className="cp-ncard">
+            {isWeddingEvent(data) ? <div className="cp-ncard" id="cp-brick">
+              <div className="cp-ncard-top"><span className="cp-sq"><Icon name="brick" size={17} /></span><b>Personalized Brick Wording</b><span className="cp-grow" /><Pill ok={data.brick_done} yes="Submitted" no="Needed" /></div>
+              <div style={{ marginTop: 12 }}><Brick api={api} code={code} name={name} initial={data.brick_lines} done={data.brick_done} onSaved={lines => setData(d => ({ ...d, brick_lines: lines, brick_done: true }))} /></div>
+            </div> : <div className="cp-ncard">
               <div className="cp-ncard-top"><span className="cp-sq"><Icon name="walk" size={17} /></span><b>Second walk-through</b><span className="cp-grow" /><Pill ok={!!data.walkthrough} yes="Scheduled" no="Optional" /></div>
               {data.walkthrough ? <>
                 <div className="cp-nbig">{fmtWalk(data.walkthrough, { weekday: 'long', month: 'long', day: 'numeric' })}</div>
@@ -544,7 +547,7 @@ export function ClientPayPage({ api, baseUrl, apiKey }) {
                 <p className="cp-muted" style={{ margin: '12px 0 0' }}>Want to see the estate again before your day? Pick a time that works for you.</p>
                 <div className="cp-nactions"><button type="button" className="cp-btn-quiet" onClick={() => go('cp-walkthrough')}>Pick a time</button></div>
               </>}
-            </div>
+            </div>}
           </div>
           <h2 className="cp-section">{isWeddingEvent(data) ? 'Wedding details' : 'Event details'}</h2>
           <div className="cp-rows">
@@ -564,16 +567,13 @@ export function ClientPayPage({ api, baseUrl, apiKey }) {
             <Acc id="cp-questionnaire" icon="clipboard" title="Event questionnaire" pill={<Pill ok={data.questionnaire_done} yes="Completed" no="To do" />}>
               <Questionnaire api={api} code={code} name={name} onSaved={() => setData(d => ({ ...d, questionnaire_done: true }))} />
             </Acc>
-            {isWeddingEvent(data) && <Acc id="cp-brick" icon="brick" title="Personalized Brick Wording" pill={<Pill ok={data.brick_done} yes="Submitted" no="Needed" />}>
-              <Brick api={api} code={code} name={name} initial={data.brick_lines} done={data.brick_done} onSaved={lines => setData(d => ({ ...d, brick_lines: lines, brick_done: true }))} />
-            </Acc>}
             {data.extra_hours && (data.extra_hours.available || data.extra_hours.added > 0) && <Acc id="cp-extra-hours" icon="clock" title="Add extra hours" pill={<Pill ok={data.extra_hours.added > 0} yes={data.extra_hours.added + ' added'} no="Optional" />}>
               <ExtraHours api={api} code={code} name={name} info={data.extra_hours} onAdded={r => setData(d => ({ ...d, ...r }))} />
             </Acc>}
             {data.rehearsal && isWeddingEvent(data) && <Acc id="cp-rehearsal" icon="calendar" title="Wedding rehearsal" pill={<Pill ok={data.rehearsal.status === 'confirmed'} yes="Added" no="Available" />}>
               <Rehearsal api={api} code={code} name={name} rehearsal={data.rehearsal} onAdded={r => setData(d => ({ ...d, ...r, rehearsal: r.rehearsal || d.rehearsal }))} />
             </Acc>}
-            {!data.walkthrough && <Acc id="cp-walkthrough" icon="walk" title="Second walk-through" pill={<Pill ok={false} yes="" no="Optional" />}>
+            {(!data.walkthrough || isWeddingEvent(data)) && <Acc id="cp-walkthrough" icon="walk" title="Second walk-through" pill={<Pill ok={!!data.walkthrough} yes="Scheduled" no="Optional" />}>
               <WalkThrough api={api} code={code} name={name} booked={data.walkthrough} onBooked={w => setData(d => ({ ...d, walkthrough: w }))} />
             </Acc>}
             <Acc id="cp-message" icon="chat" title="Message our team">
