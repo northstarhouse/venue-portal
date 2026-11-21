@@ -515,7 +515,7 @@ export function ClientPayPage({ api, baseUrl, apiKey }) {
         const longDay = d => fmt(d, { month: 'long', day: 'numeric', year: 'numeric' });
         return <>
           <h2 className="cp-section">Up next</h2>
-          <div className="cp-next-grid">
+          <div className="cp-next-grid" style={isWeddingEvent(data) ? undefined : { gridTemplateColumns: '1fr' }}>
             <div className="cp-ncard" id="cp-paycard">
               <div className="cp-ncard-top" style={{ paddingBottom: 12, borderBottom: '1px solid #efe7d8' }}><span className="cp-sq"><Icon name="card" size={17} /></span><b>Payments</b><span className="cp-grow" />{!data.has_schedule ? null : paidUp ? <Pill ok yes="Paid in full" /> : <span className={'cp-pill' + (late ? ' late' : '')}>{money(data.balance_cents)} left</span>}</div>
               {!data.has_schedule ? <p className="cp-muted" style={{ margin: '12px 0 0' }}>Your payment schedule isn't ready yet. We'll let you know when it is.</p> : <>
@@ -537,17 +537,7 @@ export function ClientPayPage({ api, baseUrl, apiKey }) {
             {isWeddingEvent(data) ? <div className="cp-ncard" id="cp-brick">
               <div className="cp-ncard-top"><span className="cp-sq"><Icon name="brick" size={17} /></span><b>Personalized Brick Wording</b><span className="cp-grow" /><Pill ok={data.brick_done} yes="Submitted" no="Needed" /></div>
               <div style={{ marginTop: 12 }}><Brick api={api} code={code} name={name} initial={data.brick_lines} done={data.brick_done} onSaved={lines => setData(d => ({ ...d, brick_lines: lines, brick_done: true }))} /></div>
-            </div> : <div className="cp-ncard">
-              <div className="cp-ncard-top"><span className="cp-sq"><Icon name="walk" size={17} /></span><b>Second walk-through</b><span className="cp-grow" /><Pill ok={!!data.walkthrough} yes="Scheduled" no="Optional" /></div>
-              {data.walkthrough ? <>
-                <div className="cp-nbig">{fmtWalk(data.walkthrough, { weekday: 'long', month: 'long', day: 'numeric' })}</div>
-                <div className="cp-muted">{fmtWalk(data.walkthrough, { hour: 'numeric', minute: '2-digit' })} · North Star House</div>
-                <div className="cp-nactions"><button type="button" className="cp-link" onClick={() => go('cp-message')}>Need to change it? Message us ›</button></div>
-              </> : <>
-                <p className="cp-muted" style={{ margin: '12px 0 0' }}>Want to see the estate again before your day? Pick a time that works for you.</p>
-                <div className="cp-nactions"><button type="button" className="cp-btn-quiet" onClick={() => go('cp-walkthrough')}>Pick a time</button></div>
-              </>}
-            </div>}
+            </div> : null}
           </div>
           <h2 className="cp-section">{isWeddingEvent(data) ? 'Wedding details' : 'Event details'}</h2>
           <div className="cp-rows">
@@ -573,7 +563,7 @@ export function ClientPayPage({ api, baseUrl, apiKey }) {
             {data.rehearsal && isWeddingEvent(data) && <Acc id="cp-rehearsal" icon="calendar" title="Wedding rehearsal" pill={<Pill ok={data.rehearsal.status === 'confirmed'} yes="Added" no="Available" />}>
               <Rehearsal api={api} code={code} name={name} rehearsal={data.rehearsal} onAdded={r => setData(d => ({ ...d, ...r, rehearsal: r.rehearsal || d.rehearsal }))} />
             </Acc>}
-            {(!data.walkthrough || isWeddingEvent(data)) && <Acc id="cp-walkthrough" icon="walk" title="Second walk-through" pill={<Pill ok={!!data.walkthrough} yes="Scheduled" no="Optional" />}>
+            {isWeddingEvent(data) && <Acc id="cp-walkthrough" icon="walk" title="Second walk-through" pill={<Pill ok={!!data.walkthrough} yes="Scheduled" no="Optional" />}>
               <WalkThrough api={api} code={code} name={name} booked={data.walkthrough} onBooked={w => setData(d => ({ ...d, walkthrough: w }))} />
             </Acc>}
             <Acc id="cp-message" icon="chat" title="Message our team">
