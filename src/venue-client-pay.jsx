@@ -50,6 +50,7 @@ const style = `.cp-page{overflow-x:hidden;--gold:#886c44;--ink:#2c2418;--muted:#
 .cp-rows .cp-acc-body{margin-top:14px;padding-top:14px;border-top:1px solid #efe7d8}
 @media(max-width:820px){.cp-next-grid,.cp-rows{grid-template-columns:1fr}.cp-section{font-size:22px}}
 .cp-pop{position:fixed;inset:0;background:rgba(40,30,15,.45);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px}.cp-pop[hidden]{display:none}.cp-popcard{background:var(--paper);border:1px solid var(--line);border-radius:14px;width:100%;max-width:680px;max-height:88vh;overflow:auto;padding:20px 24px;box-shadow:0 18px 50px rgba(40,30,15,.28);cursor:auto}.cp-popclose{background:none;border:0;font-size:22px;line-height:1;color:#7b7366;cursor:pointer;padding:2px 6px}.cp-popcard .cp-acc-body{margin-top:14px;padding-top:14px;border-top:1px solid #efe7d8}.cp-popcard .cp-hico{border-radius:7px}
+.cp-ico,.cp-sq,.cp-hico{background:none!important;border-radius:0!important}.cp-sq{width:auto;height:auto}.cp-hico{width:auto;height:auto}.cp-tiles .cp-ico{width:34px;height:34px}
 `;
 const money = c => (c / 100).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
 
