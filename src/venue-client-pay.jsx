@@ -49,6 +49,7 @@ const style = `.cp-page{overflow-x:hidden;--gold:#886c44;--ink:#2c2418;--muted:#
 .cp-rows .cp-acc-head .cp-grow{display:flex;justify-content:flex-end}.cp-rows .cp-acc-head .cp-pill{width:150px;box-sizing:border-box;justify-content:center}.cp-rows .cp-hico{border-radius:7px}
 .cp-rows .cp-acc-body{margin-top:14px;padding-top:14px;border-top:1px solid #efe7d8}
 @media(max-width:820px){.cp-next-grid,.cp-rows{grid-template-columns:1fr}.cp-section{font-size:22px}}
+.cp-pop{position:fixed;inset:0;background:rgba(40,30,15,.45);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px}.cp-pop[hidden]{display:none}.cp-popcard{background:var(--paper);border:1px solid var(--line);border-radius:14px;width:100%;max-width:680px;max-height:88vh;overflow:auto;padding:20px 24px;box-shadow:0 18px 50px rgba(40,30,15,.28);cursor:auto}.cp-popclose{background:none;border:0;font-size:22px;line-height:1;color:#7b7366;cursor:pointer;padding:2px 6px}.cp-popcard .cp-acc-body{margin-top:14px;padding-top:14px;border-top:1px solid #efe7d8}.cp-popcard .cp-hico{border-radius:7px}
 `;
 const money = c => (c / 100).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
 
@@ -175,9 +176,20 @@ function Acc({ id, title, icon, pill, defaultOpen, children }) {
     const h = e => { if (e.detail === id) setOpen(true); };
     window.addEventListener('cp-open', h); return () => window.removeEventListener('cp-open', h);
   }, [id]);
-  return <div className={"cp-card" + (open ? " open" : "")} id={id}>
-    <button type="button" className="cp-acc-head" aria-expanded={open} onClick={() => setOpen(o => !o)}><span className="cp-h">{icon && <span className="cp-hico"><Icon name={icon} size={16} /></span>}{title}</span><span className="cp-grow">{pill}</span><span className="cp-acc-chev"><Icon name="chevron" size={18} /></span></button>
-    <div className="cp-acc-body" hidden={!open}>{children}</div>
+  React.useEffect(() => {
+    if (!open) return;
+    const k = e => { if (e.key === 'Escape') setOpen(false); };
+    window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k);
+  }, [open]);
+  // Each row opens as a popup card (not a full-width block); the content stays mounted so forms keep what was typed.
+  return <div className="cp-card" id={id}>
+    <button type="button" className="cp-acc-head" aria-expanded={open} aria-haspopup="dialog" onClick={() => setOpen(true)}><span className="cp-h">{icon && <span className="cp-hico"><Icon name={icon} size={16} /></span>}{title}</span><span className="cp-grow">{pill}</span><span className="cp-acc-chev"><Icon name="chevron" size={18} /></span></button>
+    <div className="cp-pop" hidden={!open} onClick={() => setOpen(false)}>
+      <div className="cp-popcard" role="dialog" aria-modal="true" aria-label={title} onClick={e => e.stopPropagation()}>
+        <div className="cp-ncard-top"><span className="cp-h" style={{ display: 'inline-flex', alignItems: 'center', fontWeight: 700 }}>{icon && <span className="cp-hico"><Icon name={icon} size={16} /></span>}{title}</span><span className="cp-grow" style={{ display: 'flex', justifyContent: 'flex-end' }}>{pill}</span><button type="button" className="cp-popclose" aria-label="Close" onClick={() => setOpen(false)}>×</button></div>
+        <div className="cp-acc-body">{children}</div>
+      </div>
+    </div>
   </div>;
 }
 
@@ -505,17 +517,14 @@ export function ClientPayPage({ api, baseUrl, apiKey }) {
           <h2 className="cp-section">Up next</h2>
           <div className="cp-next-grid">
             <div className="cp-ncard" id="cp-paycard">
-              <div className="cp-ncard-top"><span className="cp-sq"><Icon name="card" size={17} /></span><b>{paidUp ? 'Payments' : 'Next payment'}</b><span className="cp-grow" />{paidUp ? <Pill ok yes="Paid in full" /> : nd ? <span className={'cp-pill' + (late ? ' late' : '')}>{late ? 'Past due' : 'Upcoming'}</span> : null}</div>
-              {!data.has_schedule ? <p className="cp-muted" style={{ margin: '12px 0 0' }}>Your payment schedule isn't ready yet. We'll let you know when it is.</p>
-                : paidUp ? <div className="cp-nbig">{money(data.total_cents)}<small>paid in full. Thank you!</small></div>
-                : nd ? <><div className="cp-nbig">{money(nd.amount_cents)}<small>{nd.label}</small></div>
-                  <div className="cp-muted">{nd.due_date ? 'Due ' + longDay(nd.due_date) + ' · ' : ''}{money(data.balance_cents)} total remaining</div></> : null}
-              {Array.isArray(data.schedule) && data.schedule.length > 0 && <div className="cp-paysched">
-                <div className="cp-paysched-h">Payment schedule</div>
-                {data.schedule.slice().sort((x, y) => String(x.due_date || '9999').localeCompare(String(y.due_date || '9999'))).map((p, i) => <div key={i} className="cp-paysched-row"><span><strong>{p.label}</strong><br /><span className="cp-muted">{p.due_date ? longDay(p.due_date) : ''}</span></span><span style={{ textAlign: 'right' }}>{money(p.amount_cents)}<br /><span className={'cp-pill' + (p.paid ? ' ok' : (p.due_date && String(p.due_date).slice(0, 10) < todayKey ? ' late' : ''))} style={{ fontSize: 11, padding: '1px 9px' }}>{p.paid ? 'Paid' : (p.due_date && String(p.due_date).slice(0, 10) > todayKey ? 'Upcoming' : 'Due')}</span></span></div>)}
-              </div>}
+              <div className="cp-ncard-top" style={{ paddingBottom: 12, borderBottom: '1px solid #efe7d8' }}><span className="cp-sq"><Icon name="card" size={17} /></span><b>Payments</b><span className="cp-grow" />{!data.has_schedule ? null : paidUp ? <Pill ok yes="Paid in full" /> : <span className={'cp-pill' + (late ? ' late' : '')}>{money(data.balance_cents)} left</span>}</div>
+              {!data.has_schedule ? <p className="cp-muted" style={{ margin: '12px 0 0' }}>Your payment schedule isn't ready yet. We'll let you know when it is.</p> : <>
+                <div className="cp-big">{money(data.balance_cents)} <span className="cp-muted" style={{ fontFamily: 'system-ui,sans-serif', fontWeight: 400 }}>remaining of {money(data.total_cents)}</span></div>
+                <div className="cp-bar"><span style={{ width: pct + '%' }} /></div>
+                {Array.isArray(data.schedule) && data.schedule.length > 0 && <div style={{ margin: '4px 0 10px' }}>{data.schedule.slice().sort((x, y) => String(x.due_date || '9999').localeCompare(String(y.due_date || '9999'))).map((p, i) => <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'space-between', padding: '7px 0', borderTop: i ? '1px solid #efe7d8' : 'none', fontSize: 13 }}><span><strong>{p.label}</strong><br /><span className="cp-muted">{p.due_date ? longDay(p.due_date) : ''}</span></span><span style={{ textAlign: 'right' }}>{money(p.amount_cents)}<br /><span className={'cp-pill' + (p.paid ? ' ok' : (p.due_date && String(p.due_date).slice(0, 10) < todayKey ? ' late' : ''))} style={{ fontSize: 11, padding: '1px 9px' }}>{p.paid ? 'Paid' : (p.due_date && String(p.due_date).slice(0, 10) > todayKey ? 'Upcoming' : 'Due')}</span></span></div>)}</div>}
+              </>}
               {data.has_schedule && !paidUp && data.paypal_client_id && !payOpen && <div className="cp-nactions">
-                {<button type="button" className="cp-btn" onClick={() => { if (nd) setAmount((nd.amount_cents / 100).toFixed(2)); setPayOpen(true); }}>Pay {nd ? money(nd.amount_cents) : 'now'}</button>}
+                <button type="button" className="cp-btn" onClick={() => { if (nd) setAmount((nd.amount_cents / 100).toFixed(2)); setPayOpen(true); }}>Make a payment</button>
               </div>}
               {receipt && <div className="cp-ok" role="status" style={{ marginTop: 12 }}>Payment of {money(receipt.paid_cents)} received and added to your booking. PayPal receipt: {receipt.receipt_id}</div>}
               {payOpen && <div className="cp-payform">
